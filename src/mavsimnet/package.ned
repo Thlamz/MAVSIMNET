@@ -1,0 +1,3 @@
+package mavsimnet;
+
+@namespace(mavsimnet);
