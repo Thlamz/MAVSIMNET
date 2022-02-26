@@ -17,7 +17,7 @@
 #define __RT_EXPERIMENT_MAVLINKFILEMOBILITY_H_
 
 #include <omnetpp.h>
-#include "MavlinkMobilityBase.h"
+#include "mavsimnet/mobility/base/MavlinkMobilityBase.h"
 
 using namespace omnetpp;
 

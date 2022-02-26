@@ -15,6 +15,8 @@
 
 package mavsimnet.mobility;
 
+import mavsimnet.mobility.base.MAVLinkMobilityBase;
+
 simple MAVLinkFileMobility extends MAVLinkMobilityBase
 {
     parameters:

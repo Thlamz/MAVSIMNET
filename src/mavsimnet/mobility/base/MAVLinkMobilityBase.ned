@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package mavsimnet.mobility;
+package mavsimnet.mobility.base;
 
 import inet.mobility.base.MovingMobilityBase;
 
