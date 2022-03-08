@@ -16,7 +16,19 @@
 package mavsimnet.manager;
 
 //
-// TODO auto-generated module
+// A module that manages connections to MAVLink vehicles. These vehicles are usually simulated vehicles in the SITL
+// simulator and are connected through MAVProxy using UDP to exchange messages.
+// 
+// This module is not responsible for generating or interpreting any MAVLink messages, it is merely a middle-man that facilitates
+// the message exchange between vehicles in the OMNeT++ simulation (represented by their mobility modules) and vehicles outside
+// this simulation.
+//
+// This module requires you to use inet::RealTimeScheduler as a scheduler for your simulation. This can be set up by placing this line in your
+// simulation's .ini:
+//
+// <pre>scheduler-class = "inet::RealTimeScheduler"</pre>
+//
+// This module's presence is <b>necessary</b> if you 
 //
 simple MAVLinkManager
 {
@@ -33,7 +45,7 @@ simple MAVLinkManager
         // The commands called will be formed as: shellCommand "SITLPath -arguments"
         string shellCommand = default("");
         // Path to the sim_vehicle.py file in your SITL installation. Required
-		string simulatorPath;
+		string simulatorPath = default("");
 		// Path to your MAVProxy installation
 		// This is not necessary if your MAVProxy installation is already in the PATH environment variable.
 		// Beware that if you are running OMNeT++ on windows on mingw your environment variables are overriden, and you should specify this.

@@ -53,14 +53,19 @@ void MAVLinkManager::startSimulator(uint8_t systemId) {
     if(!shellCommand.empty()) {
         command << "\"";
     }
-    std::cout << command.str() << std::endl;
+    EV_DEBUG << "Starting simulator with: " << command.str() << std::endl;
     std::system(command.str().c_str());
 }
 
 void MAVLinkManager::registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId) {
     EV_INFO << "Registering vehicle with sysid: " << +systemId << " and componentid: " << +componentId << std::endl;
     registeredVehicles.insert({VehicleEntry { systemId, componentId }, vehicle});
-    startSimulator(systemId);
+    if(!simulatorPath.empty()) {
+        EV_INFO << "Starting simulator" << std::endl;
+        startSimulator(systemId);
+    } else {
+        EV_WARN << "No simulatorPath was specified so no simulator was started" << std::endl;
+    }
 }
 
 bool MAVLinkManager::sendMessage(const mavlink_message_t& message, uint8_t destinationId) {
