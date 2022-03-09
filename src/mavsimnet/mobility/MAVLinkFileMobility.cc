@@ -16,6 +16,9 @@
 #include "MAVLinkFileMobility.h"
 #include "mavsimnet/utils/TelemetryConditions.h"
 
+
+using namespace omnetpp;
+
 namespace mavsimnet {
 
 Define_Module(MAVLinkFileMobility);

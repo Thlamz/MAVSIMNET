@@ -16,6 +16,8 @@
 #include "MAVLinkMobilityBase.h"
 #include "mavsimnet/utils/TelemetryConditions.h"
 
+using namespace omnetpp;
+using namespace inet;
 
 namespace mavsimnet {
 

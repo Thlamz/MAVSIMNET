@@ -19,8 +19,6 @@
 #include <omnetpp.h>
 #include "mavsimnet/mobility/base/MavlinkMobilityBase.h"
 
-using namespace omnetpp;
-
 namespace mavsimnet {
 
 class MAVLinkFileMobility : public MAVLinkMobilityBase

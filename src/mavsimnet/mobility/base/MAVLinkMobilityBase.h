@@ -24,9 +24,6 @@
 #include "mavlink/ardupilotmega/mavlink.h"
 #include "mavsimnet/manager/MAVLinkManager.h"
 
-using namespace omnetpp;
-using namespace inet;
-
 namespace mavsimnet {
 
 typedef std::function<bool(mavlink_message_t)> Condition;
