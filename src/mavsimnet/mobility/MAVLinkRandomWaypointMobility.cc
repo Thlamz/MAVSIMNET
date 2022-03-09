@@ -25,13 +25,13 @@ Define_Module(MAVLinkRandomWaypointMobility);
 
 void MAVLinkRandomWaypointMobility::initialize(int stage)
 {
-    if (stage == 0) {
+    MAVLinkMobilityBase::initialize(stage);
+    if (stage == 1) {
         speed = par("speed");
         waitTime = par("waitTime");
         startMovement();
         setTargetPosition();
     }
-    MAVLinkMobilityBase::initialize(stage);
 }
 
 void MAVLinkRandomWaypointMobility::handleMessage(cMessage *msg)
@@ -69,31 +69,31 @@ void MAVLinkRandomWaypointMobility::setTargetPosition(){
 }
 
 void MAVLinkRandomWaypointMobility::startMovement() {
-    EV_DEBUG << "Setting speed" << std::endl;
-    // Sending MODE GUIDED command
     mavlink_command_long_t cmd;
     mavlink_message_t msg;
-    cmd.command = MAV_CMD_DO_CHANGE_SPEED;
-    cmd.confirmation = 0;
-    cmd.param1 = 0;
-    cmd.param2 = speed;
-    cmd.target_component = 1;
-    cmd.target_system = 1;
-
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckPreArm(systemId), 15, 3);
 
     EV_DEBUG << "Sending GUIDED" << std::endl;
-    cmd = {};
     cmd.command = MAV_CMD_DO_SET_MODE;
     cmd.confirmation = 0;
     cmd.param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
     cmd.param2 = COPTER_MODE_GUIDED;
-    cmd.target_component = 1;
-    cmd.target_system = 1;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckPreArm(systemId), 15, 3);
+    queueMessage(msg, TelemetryConditions::getCheckPreArm(targetSystem), 30, 3);
+
+    EV_DEBUG << "Setting speed" << std::endl;
+    cmd = {};
+    cmd.command = MAV_CMD_DO_CHANGE_SPEED;
+    cmd.confirmation = 0;
+    cmd.param1 = 0;
+    cmd.param2 = speed;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
+
+    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+    queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_CHANGE_SPEED, targetSystem), 15, 3);
 
     EV_DEBUG << "Sending ARM THROTTLE" << std::endl;
     cmd = {};
@@ -104,7 +104,7 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     cmd.target_system = 1;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckPreArm(systemId), 15, 3);
+    queueMessage(msg, TelemetryConditions::getCheckArm(targetSystem), 15, 3);
 
 
     EV_DEBUG << "Sending TAKEOFF" << std::endl;
@@ -112,11 +112,11 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     cmd.command = MAV_CMD_NAV_TAKEOFF;
     cmd.confirmation = 0;
     cmd.param7 = 25;
-    cmd.target_component = 1;
-    cmd.target_system = 1;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckPreArm(systemId), 15, 3);
+    queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_NAV_TAKEOFF, targetSystem), 15, 3);
 }
 
 }//namespace

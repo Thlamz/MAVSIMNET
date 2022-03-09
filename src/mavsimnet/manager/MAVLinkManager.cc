@@ -70,6 +70,7 @@ void MAVLinkManager::registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId,
 
 bool MAVLinkManager::sendMessage(const mavlink_message_t& message, uint8_t destinationId) {
     Enter_Method_Silent();
+    EV_DEBUG << "Sending message to: " << +destinationId << std::endl;
     int length = mavlink_msg_to_send_buffer((uint8_t*) buf, &message);
     static const int c = sizeof(sockaddr_in);
 
@@ -128,11 +129,12 @@ void MAVLinkManager::openSocket()
     }
     EV_INFO << "Socket set to non-blocking" << std::endl;
 
-    rtScheduler->addCallback(fd, this);
+    //rtScheduler->addCallback(fd, this);
 }
 
 
 bool MAVLinkManager::notify(int incoming) {
+    EV_DEBUG << "Notified" << std::endl;
     if(incoming == fd) {
         int length;
         struct sockaddr_in client;

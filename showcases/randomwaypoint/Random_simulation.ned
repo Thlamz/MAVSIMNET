@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package filemobility;
+package randomwaypoint;
 
 import inet.common.geometry.common.OsgGeographicCoordinateSystem;
 import inet.environment.common.PhysicalEnvironment;
@@ -23,7 +23,7 @@ import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.physicallayer.ieee802154.packetlevel.Ieee802154NarrowbandScalarRadioMedium;
 import mavsimnet.manager.MAVLinkManager;
 
-network Test_simulation
+network Random_simulation
 {
     parameters:
         int numClients = default(1);

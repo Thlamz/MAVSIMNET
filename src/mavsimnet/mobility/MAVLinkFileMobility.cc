@@ -126,8 +126,8 @@ void MAVLinkFileMobility::startMission() {
     cmd.confirmation = 0;
     cmd.param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
     cmd.param2 = COPTER_MODE_GUIDED;
-    cmd.target_component = 1;
-    cmd.target_system = 1;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &message, &cmd);
     queueMessage(message, TelemetryConditions::getCheckPreArm(targetSystem), 15, 3);
 
@@ -136,8 +136,8 @@ void MAVLinkFileMobility::startMission() {
     cmd.command = MAV_CMD_COMPONENT_ARM_DISARM;
     cmd.confirmation = 0;
     cmd.param1 = 1;
-    cmd.target_component = 1;
-    cmd.target_system = 1;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &message, &cmd);
     queueMessage(message, TelemetryConditions::getCheckArm(targetSystem), 15, 3);
 
@@ -147,8 +147,8 @@ void MAVLinkFileMobility::startMission() {
     cmd.confirmation = 0;
     cmd.param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
     cmd.param2 = COPTER_MODE_AUTO;
-    cmd.target_component = 1;
-    cmd.target_system = 1;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &message, &cmd);
     queueMessage(message, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), 15, 3);
 
