@@ -1,5 +1,5 @@
-**out/*
-**results/*
-**cache/*
+**/out/*
+**/results/*
+**/cache/*
 *.exe
 *.dll
