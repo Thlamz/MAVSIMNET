@@ -134,3 +134,15 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckMissionAck(u
         return false;
     };
 }
+
+std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckTargetGlobal(float lat, float lon, float alt, uint8_t senderSystemId) {
+    return [=](mavlink_message_t msg) {
+        if(msg.msgid == MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT && verifySender(msg, senderSystemId)) {
+            mavlink_position_target_global_int_t position;
+            mavlink_msg_position_target_global_int_decode(&msg, &position);
+
+            return (position.lat_int == lat) && (position.lon_int == lon) && (position.alt = alt);
+        }
+        return false;
+    };
+}

@@ -15,4 +15,6 @@ namespace TelemetryConditions {
     std::function<bool(mavlink_message_t)> getCheckMissionRequest(uint8_t systemid, uint8_t componentId, uint16_t sequenceNumber, uint8_t senderSystemId);
 
     std::function<bool(mavlink_message_t)> getCheckMissionAck(uint8_t systemId, uint8_t componentId, uint8_t senderSystemId);
+
+    std::function<bool(mavlink_message_t)> getCheckTargetGlobal(float lat, float lon, float alt, uint8_t senderSystemId);
 }
