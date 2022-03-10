@@ -38,34 +38,40 @@ void MAVLinkRandomWaypointMobility::handleMessage(cMessage *msg)
 {
     if(msg->isSelfMessage() && strcmp(msg->getName(), "waypointChangeMessage") == 0) {
         setTargetPosition();
+    } else {
+        MAVLinkMobilityBase::handleMessage(msg);
     }
-    MAVLinkMobilityBase::handleMessage(msg);
 }
 
 void MAVLinkRandomWaypointMobility::setTargetPosition(){
-    Coord targetPosition = getRandomPosition();
-    double distance = lastPosition.distance(targetPosition);
-
+    targetPosition = getRandomPosition();
     GeoCoord geoCoords = coordinateSystem->computeGeographicCoordinate(targetPosition);
-
+    EV_INFO << "Random coordinates (x,y,z) - (lat, lon, alt): (" << targetPosition.x << "," << targetPosition.y << "," << targetPosition.z << ") - (" <<
+            geoCoords.latitude.get() << "," << geoCoords.longitude.get() << "," << geoCoords.altitude.get() << ")" << std::endl;
     mavlink_set_position_target_global_int_t position_command;
     position_command.lat_int = geoCoords.latitude.get() * (1e7);
     position_command.lon_int = geoCoords.longitude.get() * (1e7);
     position_command.alt = geoCoords.altitude.get();
     position_command.type_mask = POSITION_TARGET_TYPEMASK_VX_IGNORE | POSITION_TARGET_TYPEMASK_VY_IGNORE | POSITION_TARGET_TYPEMASK_VZ_IGNORE |
             POSITION_TARGET_TYPEMASK_AX_IGNORE | POSITION_TARGET_TYPEMASK_AY_IGNORE | POSITION_TARGET_TYPEMASK_AZ_IGNORE |
-            POSITION_TARGET_TYPEMASK_FORCE_SET | POSITION_TARGET_TYPEMASK_YAW_IGNORE |   POSITION_TARGET_TYPEMASK_YAW_RATE_IGNORE;
+            POSITION_TARGET_TYPEMASK_YAW_IGNORE |   POSITION_TARGET_TYPEMASK_YAW_RATE_IGNORE;
+    position_command.coordinate_frame = MAV_FRAME_GLOBAL_RELATIVE_ALT_INT;
     position_command.target_system = targetSystem;
     position_command.target_component = targetComponent;
 
     mavlink_message_t msg;
     mavlink_msg_set_position_target_global_int_encode(targetSystem, targetComponent, &msg, &position_command);
     queueMessage(msg, TelemetryConditions::getCheckTargetGlobal(position_command.lat_int, position_command.lon_int, position_command.alt, targetSystem), 15, 3);
+}
 
-    simtime_t travelTime = distance / speed;
 
-    cancelEvent(waypointChangeMessage);
-    scheduleAt(simTime() + travelTime + waitTime, waypointChangeMessage);
+void MAVLinkRandomWaypointMobility::move() {
+    Enter_Method_Silent();
+    if(targetPosition != Coord::NIL && targetPosition.distance(currentPosition) <= 5 && !waypointChangeMessage->isScheduled()) {
+        scheduleAt(simTime() + waitTime, waypointChangeMessage);
+    }
+
+    MAVLinkMobilityBase::move();
 }
 
 void MAVLinkRandomWaypointMobility::startMovement() {
@@ -116,7 +122,7 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     cmd.target_system = targetSystem;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_NAV_TAKEOFF, targetSystem), 15, 3);
+    queueMessage(msg, TelemetryConditions::getCheckAltitude(25, 3, targetSystem), 30, 3);
 }
 
 }//namespace

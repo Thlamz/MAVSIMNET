@@ -129,7 +129,7 @@ void MAVLinkManager::openSocket()
     }
     EV_INFO << "Socket set to non-blocking" << std::endl;
 
-    //rtScheduler->addCallback(fd, this);
+    rtScheduler->addCallback(fd, this);
 }
 
 

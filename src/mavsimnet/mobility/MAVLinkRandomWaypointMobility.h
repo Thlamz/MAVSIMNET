@@ -33,6 +33,7 @@ protected:
     double speed;
     simtime_t waitTime;
     omnetpp::cMessage *waypointChangeMessage = new cMessage("waypointChangeMessage");
+    Coord targetPosition = Coord::NIL;
 protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
@@ -45,6 +46,8 @@ protected:
      * Sets the correct flying mode and parameters. Finally it instructs the drone to takeoff
      */
     virtual void startMovement();
+
+    virtual void move() override;
 };
 
 } //namespace
