@@ -5,7 +5,7 @@
  * @brief This module contains message checkers that should be used as conditions for requirements.
  * 
  */
-
+namespace mavsimnet {
 
 bool verifySender(mavlink_message_t message, uint8_t senderSystemId) {
     return (message.sysid == senderSystemId);
@@ -145,4 +145,5 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckTargetGlobal
         }
         return false;
     };
+}
 }

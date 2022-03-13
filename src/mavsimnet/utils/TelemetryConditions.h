@@ -1,6 +1,7 @@
 #include "mavlink/ardupilotmega/mavlink.h"
 #include <functional>
 
+namespace mavsimnet {
 namespace TelemetryConditions {
     bool checkEmpty(mavlink_message_t);
 
@@ -17,4 +18,5 @@ namespace TelemetryConditions {
     std::function<bool(mavlink_message_t)> getCheckMissionAck(uint8_t systemId, uint8_t componentId, uint8_t senderSystemId);
 
     std::function<bool(mavlink_message_t)> getCheckTargetGlobal(float lat, float lon, float alt, uint8_t senderSystemId);
+}
 }

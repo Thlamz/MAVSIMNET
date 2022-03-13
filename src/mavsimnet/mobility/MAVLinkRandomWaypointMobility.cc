@@ -15,6 +15,7 @@
 
 #include "MAVLinkRandomWaypointMobility.h"
 #include "mavsimnet/utils/TelemetryConditions.h"
+#include "mavsimnet/utils/VehicleRoutines.h"
 
 using namespace omnetpp;
 using namespace inet;
@@ -77,17 +78,10 @@ void MAVLinkRandomWaypointMobility::move() {
 void MAVLinkRandomWaypointMobility::startMovement() {
     mavlink_command_long_t cmd;
     mavlink_message_t msg;
-
-    EV_DEBUG << "Sending GUIDED" << std::endl;
-    cmd.command = MAV_CMD_DO_SET_MODE;
-    cmd.confirmation = 0;
-    cmd.param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-    cmd.param2 = COPTER_MODE_GUIDED;
-    cmd.target_component = targetComponent;
-    cmd.target_system = targetSystem;
-
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckPreArm(targetSystem), 30, 3);
+    
+    for(Instruction instruction : VehicleRoutines::armTakeoff<VehicleType::COPTER>(50, targetSystem, targetComponent)) {
+        queueInstruction(instruction);
+    }
 
     EV_DEBUG << "Setting speed" << std::endl;
     cmd = {};
@@ -101,28 +95,18 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
     queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_CHANGE_SPEED, targetSystem), 15, 3);
 
-    EV_DEBUG << "Sending ARM THROTTLE" << std::endl;
-    cmd = {};
-    cmd.command = MAV_CMD_COMPONENT_ARM_DISARM;
+
+    EV_DEBUG << "Sending GUIDED" << std::endl;
+    cmd.command = MAV_CMD_DO_SET_MODE;
     cmd.confirmation = 0;
-    cmd.param1 = 1;
-    cmd.target_component = 1;
-    cmd.target_system = 1;
-
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckArm(targetSystem), 15, 3);
-
-
-    EV_DEBUG << "Sending TAKEOFF" << std::endl;
-    cmd = {};
-    cmd.command = MAV_CMD_NAV_TAKEOFF;
-    cmd.confirmation = 0;
-    cmd.param7 = 25;
+    cmd.param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    cmd.param2 = COPTER_MODE_GUIDED;
     cmd.target_component = targetComponent;
     cmd.target_system = targetSystem;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckAltitude(25, 3, targetSystem), 30, 3);
+    queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), 30, 3);
+
 }
 
 }//namespace

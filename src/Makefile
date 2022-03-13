@@ -24,7 +24,13 @@ PROJECTRELATIVE_PATH = src
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
-OBJS = $O/mavsimnet/manager/MAVLinkManager.o $O/mavsimnet/mobility/MAVLinkFileMobility.o $O/mavsimnet/mobility/MAVLinkRandomWaypointMobility.o $O/mavsimnet/mobility/base/MAVLinkMobilityBase.o $O/mavsimnet/utils/TelemetryConditions.o
+OBJS = \
+    $O/mavsimnet/manager/MAVLinkManager.o \
+    $O/mavsimnet/mobility/MAVLinkFileMobility.o \
+    $O/mavsimnet/mobility/MAVLinkRandomWaypointMobility.o \
+    $O/mavsimnet/mobility/base/MAVLinkMobilityBase.o \
+    $O/mavsimnet/utils/TelemetryConditions.o \
+    $O/mavsimnet/utils/VehicleRoutines.o
 
 # Message files
 MSGFILES =

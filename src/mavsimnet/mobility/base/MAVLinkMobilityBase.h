@@ -23,11 +23,9 @@
 #include "inet/common/geometry/common/GeographicCoordinateSystem.h"
 #include "mavlink/ardupilotmega/mavlink.h"
 #include "mavsimnet/manager/MAVLinkManager.h"
+#include "mavsimnet/mobility/base/MAVLinkInstruction.h"
 
 namespace mavsimnet {
-
-typedef std::function<bool(mavlink_message_t)> Condition;
-typedef std::tuple<mavlink_message_t, Condition, simtime_t, int> Instruction;
 
 class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IMAVLinkVehicle
 {
@@ -35,15 +33,16 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     virtual void receiveTelemetry(mavlink_message_t message) override;
 
     virtual void queueMessage(mavlink_message_t message, Condition condition = {}, simtime_t timeout = -1, int retries = 0);
+    virtual void queueInstruction(Instruction instruction);
     virtual void clearQueue();
 
     virtual void nextMessage();
     virtual void sendMessage(mavlink_message_t message, int &currentTries, int maxRetries);
 
-    mavlink_message_t getActiveMessage() { return std::get<0>(activeInstruction); };
-    Condition getActiveCondition() { return std::get<1>(activeInstruction); };
-    simtime_t getActiveTimeout() { return std::get<2>(activeInstruction); };
-    int getActiveRetries() { return std::get<3>(activeInstruction); };
+    mavlink_message_t getActiveMessage() { return activeInstruction.message; };
+    Condition getActiveCondition() { return activeInstruction.condition; };
+    simtime_t getActiveTimeout() { return activeInstruction.timeout; };
+    int getActiveRetries() { return activeInstruction.retries; };
     Coord getCurrentCoord() { return currentPosition; }
 
     ~MAVLinkMobilityBase();

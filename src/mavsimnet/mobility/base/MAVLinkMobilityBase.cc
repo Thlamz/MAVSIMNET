@@ -88,7 +88,11 @@ void MAVLinkMobilityBase::establishConnection() {
 }
 
 void MAVLinkMobilityBase::queueMessage(mavlink_message_t message, Condition condition, simtime_t timeout, int retries) {
-    instructionQueue.push(Instruction(message, condition, timeout, retries));
+    instructionQueue.push({message, condition, timeout, retries});
+}
+
+void MAVLinkMobilityBase::queueInstruction(Instruction instruction) {
+    instructionQueue.push(instruction);
 }
 
 void MAVLinkMobilityBase::nextMessage() {
