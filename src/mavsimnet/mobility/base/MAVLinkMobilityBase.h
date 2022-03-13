@@ -24,6 +24,7 @@
 #include "mavlink/ardupilotmega/mavlink.h"
 #include "mavsimnet/manager/MAVLinkManager.h"
 #include "mavsimnet/mobility/base/MAVLinkInstruction.h"
+#include "mavsimnet/utils/VehicleTypes.h"
 
 namespace mavsimnet {
 
@@ -32,8 +33,18 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
   public:
     virtual void receiveTelemetry(mavlink_message_t message) override;
 
+  protected:
+    virtual void initialize(int stage) override;
+    virtual void handleMessage(cMessage *msg) override;
+    virtual void move() override;
+    virtual void orient() override;
+
+    virtual void establishConnection();
+    virtual void sendMessage(Instruction instruction);
+    virtual void updatePosition(mavlink_message_t message);
     virtual void queueMessage(mavlink_message_t message, Condition condition = {}, simtime_t timeout = -1, int retries = 0);
     virtual void queueInstruction(Instruction instruction);
+    virtual void queueInstructions(std::vector<Instruction> instructions);
     virtual void clearQueue();
 
     virtual void nextMessage();
@@ -48,17 +59,6 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     ~MAVLinkMobilityBase();
 
 
-  protected:
-    virtual void initialize(int stage) override;
-    virtual void handleMessage(cMessage *msg) override;
-    virtual void move() override;
-    virtual void orient() override;
-
-    virtual void establishConnection();
-    virtual void sendMessage(Instruction instruction);
-    virtual void updatePosition(mavlink_message_t message);
-
-
     enum CommunicationSelfMessages {
         TIMEOUT = 0
     };
@@ -69,7 +69,6 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     Quaternion currentOrientation;
     MAVLinkManager *manager;
     IGeographicCoordinateSystem *coordinateSystem;
-
   private:
     int fd;
     std::queue<Instruction> instructionQueue;

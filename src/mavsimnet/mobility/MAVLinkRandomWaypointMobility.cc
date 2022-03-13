@@ -79,11 +79,10 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     mavlink_command_long_t cmd;
     mavlink_message_t msg;
     
-    for(Instruction instruction : VehicleRoutines::armTakeoff<VehicleType::COPTER>(50, targetSystem, targetComponent)) {
-        queueInstruction(instruction);
-    }
+    // Commanding the vehicle to takeoff
+    queueInstructions(VehicleRoutines::armTakeoff(vehicleType, 50, targetSystem, targetComponent));
 
-    EV_DEBUG << "Setting speed" << std::endl;
+    // Setting vehicle's speed
     cmd = {};
     cmd.command = MAV_CMD_DO_CHANGE_SPEED;
     cmd.confirmation = 0;
@@ -95,18 +94,12 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
     queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_CHANGE_SPEED, targetSystem), 15, 3);
 
+    // Setting mode to guided, to prepare for random waypoint instructions
+    queueInstructions(VehicleRoutines::setMode(vehicleType, VehicleRoutines::GUIDED, targetSystem, targetComponent));
+}
 
-    EV_DEBUG << "Sending GUIDED" << std::endl;
-    cmd.command = MAV_CMD_DO_SET_MODE;
-    cmd.confirmation = 0;
-    cmd.param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-    cmd.param2 = COPTER_MODE_GUIDED;
-    cmd.target_component = targetComponent;
-    cmd.target_system = targetSystem;
-
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), 30, 3);
-
+MAVLinkRandomWaypointMobility::~MAVLinkRandomWaypointMobility() {
+    cancelAndDelete(waypointChangeMessage);
 }
 
 }//namespace

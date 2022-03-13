@@ -18,6 +18,7 @@
 
 #include <omnetpp.h>
 #include "inet/common/scheduler/RealTimeScheduler.h"
+#include "mavsimnet/utils/VehicleTypes.h"
 #include "mavlink/ardupilotmega/mavlink.h"
 
 using namespace omnetpp;
@@ -33,9 +34,10 @@ public:
     class IMAVLinkVehicle {
     public:
         virtual void receiveTelemetry(mavlink_message_t) = 0;
+        VehicleType vehicleType;
     };
 
-    virtual void startSimulator(uint8_t systemId);
+    virtual void startSimulator(VehicleType vehicleType, uint8_t systemId);
     virtual void registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId);
     virtual bool sendMessage(const mavlink_message_t& message, uint8_t destinationId);
     virtual bool notify(int fd) override;

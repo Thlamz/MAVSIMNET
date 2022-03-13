@@ -15,6 +15,7 @@
 
 #include "MAVLinkFileMobility.h"
 #include "mavsimnet/utils/TelemetryConditions.h"
+#include "mavsimnet/utils/VehicleRoutines.h"
 
 
 using namespace omnetpp;
@@ -121,15 +122,7 @@ void MAVLinkFileMobility::startMission() {
     mavlink_message_t message;
 
     // Sending MODE GUIDED command
-    cmd = {};
-    cmd.command = MAV_CMD_DO_SET_MODE;
-    cmd.confirmation = 0;
-    cmd.param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-    cmd.param2 = COPTER_MODE_GUIDED;
-    cmd.target_component = targetComponent;
-    cmd.target_system = targetSystem;
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &message, &cmd);
-    queueMessage(message, TelemetryConditions::getCheckPreArm(targetSystem), 15, 3);
+    queueInstructions(VehicleRoutines::setMode(vehicleType, VehicleRoutines::GUIDED, targetSystem, targetComponent));
 
     // Sending ARM THROTTLE command
     cmd = {};
@@ -142,15 +135,7 @@ void MAVLinkFileMobility::startMission() {
     queueMessage(message, TelemetryConditions::getCheckArm(targetSystem), 15, 3);
 
     // Sending MODE AUTO command
-    cmd = {};
-    cmd.command = MAV_CMD_DO_SET_MODE;
-    cmd.confirmation = 0;
-    cmd.param1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-    cmd.param2 = COPTER_MODE_AUTO;
-    cmd.target_component = targetComponent;
-    cmd.target_system = targetSystem;
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &message, &cmd);
-    queueMessage(message, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), 15, 3);
+    queueInstructions(VehicleRoutines::setMode(vehicleType, VehicleRoutines::AUTO, targetSystem, targetComponent));
 
     // Starting mission
     cmd = {};

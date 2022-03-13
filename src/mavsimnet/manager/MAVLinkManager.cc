@@ -38,7 +38,7 @@ int MAVLinkManager::numInitStages() const {
     return 2;
 }
 
-void MAVLinkManager::startSimulator(uint8_t systemId) {
+void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
     std::ostringstream command;
 #ifdef _WIN32
     command << "set PATH=%PATH%;" << MAVProxyPath << " & ";
@@ -49,7 +49,18 @@ void MAVLinkManager::startSimulator(uint8_t systemId) {
     if(!shellCommand.empty()) {
         command << shellCommand << " \"";
     }
-    command << simulatorPath << " -N -v ArduCopter -I " << +systemId << " --sysid " << +systemId << " --out 127.0.0.1:" << connectionPort << " & ";;
+
+    std::string vehicleTypeSimulator;
+    switch(vehicleType) {
+    case COPTER:
+        vehicleTypeSimulator = "ArduCopter";
+        break;
+    case PLANE:
+        vehicleTypeSimulator = "ArduPlane";
+        break;
+    }
+
+    command << simulatorPath << " -N -v " << vehicleTypeSimulator <<" -I " << +systemId << " --sysid " << +systemId << " --out 127.0.0.1:" << connectionPort << " & ";;
     if(!shellCommand.empty()) {
         command << "\"";
     }
@@ -62,7 +73,7 @@ void MAVLinkManager::registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId,
     registeredVehicles.insert({VehicleEntry { systemId, componentId }, vehicle});
     if(!simulatorPath.empty()) {
         EV_INFO << "Starting simulator" << std::endl;
-        startSimulator(systemId);
+        startSimulator(vehicle->vehicleType, systemId);
     } else {
         EV_WARN << "No simulatorPath was specified so no simulator was started" << std::endl;
     }

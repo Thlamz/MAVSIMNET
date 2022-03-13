@@ -23,5 +23,11 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
         @class(MAVLinkMobilityBase);
         string managerModule = default("mavlinkManager");
         int targetSystem = default(1);
-        int targetComponent = default(1);        
+        int targetComponent = default(1);
+        
+        // MAVLink type of vehicle that this class represents
+        // COPTER=1
+        // PLANE=2 
+        int vehicleType = default(1); 
+        
 }

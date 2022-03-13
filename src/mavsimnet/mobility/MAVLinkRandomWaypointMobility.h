@@ -48,6 +48,8 @@ protected:
     virtual void startMovement();
 
     virtual void move() override;
+
+    ~MAVLinkRandomWaypointMobility();
 };
 
 } //namespace
