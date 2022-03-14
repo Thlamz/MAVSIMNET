@@ -54,6 +54,7 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     Condition getActiveCondition() { return activeInstruction.condition; };
     simtime_t getActiveTimeout() { return activeInstruction.timeout; };
     int getActiveRetries() { return activeInstruction.retries; };
+    bool getActiveCompleted() { return activeInstruction.completed; };
     Coord getCurrentCoord() { return currentPosition; }
 
     ~MAVLinkMobilityBase();

@@ -21,6 +21,7 @@ struct Instruction {
     Condition condition;
     omnetpp::simtime_t timeout;
     int retries;
+    bool completed;
 };
 
 

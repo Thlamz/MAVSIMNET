@@ -1,4 +1,5 @@
 #include "mavlink/ardupilotmega/mavlink.h"
+#include "inet/common/geometry/common/GeographicCoordinateSystem.h"
 #include <functional>
 
 namespace mavsimnet {
@@ -17,7 +18,11 @@ namespace TelemetryConditions {
 
     std::function<bool(mavlink_message_t)> getCheckMissionAck(uint8_t systemId, uint8_t componentId, uint8_t senderSystemId);
 
+    std::function<bool(mavlink_message_t)> getCheckMissionItemReached(uint16_t seq, uint8_t senderSystemId);
+
     std::function<bool(mavlink_message_t)> getCheckTargetGlobal(float lat, float lon, float alt, uint8_t senderSystemId);
+
+    std::function<bool(mavlink_message_t)> getCheckGlobalPosition(float lat, float lon, float alt, float tolerance, inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t senderSystemId);
 
     std::function<bool(mavlink_message_t)> getCheckParamValue(std::string param_id, float param_value, uint8_t senderSystemId);
 }

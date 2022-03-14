@@ -5,7 +5,6 @@
  *      Author: thlam
  */
 
-#include <omnetpp.h>
 #include "VehicleRoutines.h"
 #include "mavlink/ardupilotmega/mavlink.h"
 #include "mavsimnet/utils/TelemetryConditions.h"
@@ -176,7 +175,7 @@ std::vector<Instruction> setMode(VehicleType type, Mode mode, uint8_t targetSyst
 }
 
 // https://ardupilot.org/dev/docs/copter-commands-in-guided-mode.html
-std::vector<Instruction> guidedGotoCopter(double latitude, double longitude, float altitude, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> guidedGotoCopter(double latitude, double longitude, float altitude, inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t targetSystem, uint8_t targetComponent) {
     std::vector<Instruction> instructions;
 
     mavlink_set_position_target_global_int_t position_command;
@@ -192,7 +191,7 @@ std::vector<Instruction> guidedGotoCopter(double latitude, double longitude, flo
 
     mavlink_message_t msg;
     mavlink_msg_set_position_target_global_int_encode(targetSystem, targetComponent, &msg, &position_command);
-    instructions.push_back({msg, TelemetryConditions::getCheckTargetGlobal(position_command.lat_int, position_command.lon_int, position_command.alt, targetSystem), 15, 3});
+    instructions.push_back({msg, TelemetryConditions::getCheckGlobalPosition(latitude, longitude, altitude, 5, coordinateSystem, targetSystem), 15, 3});
 
     return instructions;
 }
@@ -213,17 +212,17 @@ std::vector<Instruction> guidedGotoPlane(double latitude, double longitude, floa
 
     mavlink_message_t msg;
     mavlink_msg_mission_item_int_encode(targetSystem, targetComponent, &msg, &missionItem);
-    instructions.push_back({msg, TelemetryConditions::getCheckTargetGlobal(missionItem.x, missionItem.y, altitude, targetSystem), 15, 3});
+    instructions.push_back({msg, TelemetryConditions::getCheckMissionItemReached(0, targetSystem), 15, 3});
 
     return instructions;
 }
 
-std::vector<Instruction> guidedGoto(VehicleType type, double lat, double lon, float z, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t targetSystem, uint8_t targetComponent) {
     switch(type) {
     case COPTER:
-        return guidedGotoCopter(lat, lon, z, targetSystem, targetComponent);
+        return guidedGotoCopter(latitude, longitude, altitude, coordinateSystem, targetSystem, targetComponent);
     case PLANE:
-        return guidedGotoPlane(lat, lon, z, targetSystem, targetComponent);
+        return guidedGotoPlane(latitude, longitude, altitude, targetSystem, targetComponent);
     }
 }
 

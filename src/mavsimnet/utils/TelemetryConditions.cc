@@ -1,11 +1,13 @@
 #include <iostream>
 
 #include "TelemetryConditions.h"
+
 /**
  * @brief This module contains message checkers that should be used as conditions for requirements.
  * 
  */
 namespace mavsimnet {
+namespace TelemetryConditions {
 
 bool verifySender(mavlink_message_t message, uint8_t senderSystemId) {
     return (message.sysid == senderSystemId);
@@ -17,7 +19,7 @@ bool verifySender(mavlink_message_t message, uint8_t senderSystemId) {
  * 
  * @return true 
  */
-bool TelemetryConditions::checkEmpty(mavlink_message_t) {
+bool checkEmpty(mavlink_message_t) {
     return true;
 }
 
@@ -28,7 +30,7 @@ bool TelemetryConditions::checkEmpty(mavlink_message_t) {
  * @param command The command you want to get the checker for
  * @return Condition Returns true when command gets acknowledged
  */
-std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckCmdAck(uint8_t systemId, uint8_t componentId, unsigned short command, uint8_t senderSystemId) {
+std::function<bool(mavlink_message_t)> getCheckCmdAck(uint8_t systemId, uint8_t componentId, unsigned short command, uint8_t senderSystemId) {
     return [=](mavlink_message_t message) {
         if(message.msgid == MAVLINK_MSG_ID_COMMAND_ACK && verifySender(message, senderSystemId)) {
             mavlink_command_ack_t ack;
@@ -47,7 +49,7 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckCmdAck(uint8
  * @return true If the vehicle is ready to arm
  * @return false If the vehicle is not yet ready to arm 
  */
-std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckPreArm(uint8_t senderSystemId) {
+std::function<bool(mavlink_message_t)> getCheckPreArm(uint8_t senderSystemId) {
     static const uint16_t required_value = (EKF_ATTITUDE |
                 ESTIMATOR_VELOCITY_HORIZ |
                 ESTIMATOR_VELOCITY_VERT |
@@ -75,7 +77,7 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckPreArm(uint8
  * @return true If the vehicle is armed
  * @return false If the vehicle is not armed
  */
-std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckArm(uint8_t senderSystemId) {
+std::function<bool(mavlink_message_t)> getCheckArm(uint8_t senderSystemId) {
     return [=](mavlink_message_t message) {
         if(message.msgid == MAVLINK_MSG_ID_HEARTBEAT && verifySender(message, senderSystemId)) {
             mavlink_heartbeat_t heartbeat;
@@ -93,7 +95,7 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckArm(uint8_t 
  * @param tolerance Margin of error for the altitude
  * @return Condition Message checker for that specific altitude and tolerance
  */
-std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckAltitude(int32_t altitude, int32_t tolerance, uint8_t senderSystemId) {
+std::function<bool(mavlink_message_t)> getCheckAltitude(int32_t altitude, int32_t tolerance, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT && verifySender(msg, senderSystemId)) {
             mavlink_global_position_int_t position;
@@ -108,7 +110,7 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckAltitude(int
  * @brief Gets a message checker that will resolve when a mission request arrives
  *
  */
-std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckMissionRequest(uint8_t systemId, uint8_t componentId, uint16_t sequenceNumber, uint8_t senderSystemId) {
+std::function<bool(mavlink_message_t)> getCheckMissionRequest(uint8_t systemId, uint8_t componentId, uint16_t sequenceNumber, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_MISSION_REQUEST_INT && verifySender(msg, senderSystemId)) {
             mavlink_mission_request_int_t request;
@@ -124,7 +126,7 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckMissionReque
     };
 }
 
-std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckMissionAck(uint8_t systemId, uint8_t componentId, uint8_t senderSystemId) {
+std::function<bool(mavlink_message_t)> getCheckMissionAck(uint8_t systemId, uint8_t componentId, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_MISSION_ACK && verifySender(msg, senderSystemId)) {
                 mavlink_mission_ack_t ack;
@@ -135,7 +137,18 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckMissionAck(u
     };
 }
 
-std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckTargetGlobal(float lat, float lon, float alt, uint8_t senderSystemId) {
+std::function<bool(mavlink_message_t)> getCheckMissionItemReached(uint16_t seq, uint8_t senderSystemId) {
+    return [=](mavlink_message_t msg) {
+        if(msg.msgid == MAVLINK_MSG_ID_MISSION_ITEM_REACHED && verifySender(msg, senderSystemId)) {
+            mavlink_mission_item_reached_t reached;
+            mavlink_msg_mission_item_reached_decode(&msg, &reached);
+            return reached.seq == seq;
+        }
+        return false;
+    };
+}
+
+std::function<bool(mavlink_message_t)> getCheckTargetGlobal(float lat, float lon, float alt, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT && verifySender(msg, senderSystemId)) {
             mavlink_position_target_global_int_t position;
@@ -147,8 +160,22 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckTargetGlobal
     };
 }
 
+std::function<bool(mavlink_message_t)> getCheckGlobalPosition(float lat, float lon, float alt, float tolerance, inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t senderSystemId) {
+    inet::Coord targetCoords = coordinateSystem->computeSceneCoordinate(inet::GeoCoord(inet::deg(lat), inet::deg(lon), inet::m(alt)));
+    return [=](mavlink_message_t msg) {
+        if(msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT && verifySender(msg, senderSystemId)) {
+            mavlink_global_position_int_t position;
+            mavlink_msg_global_position_int_decode(&msg,&position);
 
-std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckParamValue(std::string param_id, float param_value, uint8_t senderSystemId) {
+            inet::GeoCoord currentCoord(inet::deg(position.lat/(1e7)), inet::deg(position.lon/(1e7)), inet::m(position.alt));
+
+            return coordinateSystem->computeSceneCoordinate(currentCoord).distance(targetCoords) <= tolerance;
+        }
+
+    };
+}
+
+std::function<bool(mavlink_message_t)> getCheckParamValue(std::string param_id, float param_value, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_PARAM_VALUE && verifySender(msg, senderSystemId)) {
             mavlink_param_value_t param;
@@ -157,5 +184,8 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckParamValue(s
         }
         return false;
     };
+}
+
+
 }
 }

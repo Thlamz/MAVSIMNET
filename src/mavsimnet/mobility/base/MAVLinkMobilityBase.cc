@@ -89,7 +89,7 @@ void MAVLinkMobilityBase::establishConnection() {
 }
 
 void MAVLinkMobilityBase::queueMessage(mavlink_message_t message, Condition condition, simtime_t timeout, int retries) {
-    instructionQueue.push({message, condition, timeout, retries});
+    instructionQueue.push(Instruction{message, condition, timeout, retries, false});
 }
 
 void MAVLinkMobilityBase::queueInstruction(Instruction instruction) {
@@ -194,6 +194,7 @@ void MAVLinkMobilityBase::receiveTelemetry(mavlink_message_t message) {
     EV_DETAIL << "Received MAVLINK: " << message.msgid << std::endl;
     updatePosition(message);
     if(!getActiveCondition() || getActiveCondition()(message)) {
+        activeInstruction.completed = true;
         nextMessage();
     }
 }

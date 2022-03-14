@@ -11,6 +11,7 @@
 #include <vector>
 #include "VehicleTypes.h"
 #include "mavsimnet/mobility/base/MAVLinkInstruction.h"
+#include "inet/common/geometry/common/GeographicCoordinateSystem.h"
 
 namespace mavsimnet {
 namespace VehicleRoutines {
@@ -25,7 +26,7 @@ enum Mode {
 std::vector<Instruction> setMode(VehicleType type, Mode mode, uint8_t targetSystem, uint8_t targetComponent);
 
 /* GUIDED MODE COMMANDS */
-std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, uint8_t targetSystem, uint8_t targetComponent);
+std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t targetSystem, uint8_t targetComponent);
 }
 }
 
