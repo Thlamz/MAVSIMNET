@@ -15,7 +15,7 @@
 namespace mavsimnet {
 namespace VehicleRoutines {
 
-std::vector<Instruction> armTakeoff(VehicleType type, int altitude, uint8_t targetSystem, uint8_t targetComponent);
+std::vector<Instruction> armTakeoff(VehicleType type, float altitude, uint8_t targetSystem, uint8_t targetComponent);
 
 enum Mode {
     GUIDED,
@@ -23,6 +23,9 @@ enum Mode {
     TAKEOFF
 };
 std::vector<Instruction> setMode(VehicleType type, Mode mode, uint8_t targetSystem, uint8_t targetComponent);
+
+/* GUIDED MODE COMMANDS */
+std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, uint8_t targetSystem, uint8_t targetComponent);
 }
 }
 

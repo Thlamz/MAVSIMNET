@@ -31,6 +31,7 @@ void MAVLinkMobilityBase::initialize(int stage)
         targetSystem = par("targetSystem");
         targetComponent = par("targetComponent");
         vehicleType = static_cast<VehicleType>(par("vehicleType").intValue());
+        std::cout << vehicleType << std::endl;
         manager = getModuleFromPar<MAVLinkManager>(par("managerModule"), this, true);
         coordinateSystem = getModuleFromPar<IGeographicCoordinateSystem>(par("coordinateSystemModule"), this, true);
         manager->registerVehicle(this, targetSystem, targetComponent);
@@ -40,7 +41,6 @@ void MAVLinkMobilityBase::initialize(int stage)
     if (stage == 1) {
         systemId = manager->getSystemId();
         componentId = manager->getComponentId();
-
     }
 }
 void MAVLinkMobilityBase::handleMessage(cMessage *msg) {

@@ -148,12 +148,12 @@ std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckTargetGlobal
 }
 
 
-std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckParamValue(std::string param_id, uint8_t param_type, float param_value, uint8_t senderSystemId) {
+std::function<bool(mavlink_message_t)> TelemetryConditions::getCheckParamValue(std::string param_id, float param_value, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_PARAM_VALUE && verifySender(msg, senderSystemId)) {
             mavlink_param_value_t param;
             mavlink_msg_param_value_decode(&msg, &param);
-            return (param.param_type == param_type) && (strcmp(param.param_id, param_id.c_str()) == 0) && (param.param_value == param_value);
+            return (strcmp(param.param_id, param_id.c_str()) == 0) && (param.param_value == param_value);
         }
         return false;
     };

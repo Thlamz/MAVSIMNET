@@ -64,7 +64,7 @@ void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
     if(!shellCommand.empty()) {
         command << "\"";
     }
-    EV_DEBUG << "Starting simulator with: " << command.str() << std::endl;
+    EV_DETAIL << "Starting simulator with: " << command.str() << std::endl;
     std::system(command.str().c_str());
 }
 
@@ -81,7 +81,7 @@ void MAVLinkManager::registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId,
 
 bool MAVLinkManager::sendMessage(const mavlink_message_t& message, uint8_t destinationId) {
     Enter_Method_Silent();
-    EV_DEBUG << "Sending message to: " << +destinationId << std::endl;
+    EV_DETAIL << "Sending message to: " << +destinationId << std::endl;
     int length = mavlink_msg_to_send_buffer((uint8_t*) buf, &message);
     static const int c = sizeof(sockaddr_in);
 
@@ -145,7 +145,7 @@ void MAVLinkManager::openSocket()
 
 
 bool MAVLinkManager::notify(int incoming) {
-    EV_DEBUG << "Notified" << std::endl;
+    EV_DETAIL << "Notified" << std::endl;
     if(incoming == fd) {
         int length;
         struct sockaddr_in client;
@@ -160,7 +160,7 @@ bool MAVLinkManager::notify(int incoming) {
                 EV_ERROR << "Error receiving message, code: " << error << std::endl;
                 return false;
             }
-            EV_DEBUG << "Received " << length << " bytes." << std::endl;
+            EV_DETAIL << "Received " << length << " bytes." << std::endl;
 
             mavlink_status_t status;
             mavlink_message_t msg;
@@ -175,7 +175,7 @@ bool MAVLinkManager::notify(int incoming) {
                     try {
                         vehicle = registeredVehicles.at(VehicleEntry {msg.sysid, msg.compid});
                     } catch(std::out_of_range error) {
-                        EV_DEBUG << "Received message from unregistered vehicle ID: " << msg.sysid << " COMPID: " << msg.compid << std::endl;
+                        EV_DETAIL << "Received message from unregistered vehicle ID: " << msg.sysid << " COMPID: " << msg.compid << std::endl;
                         break;
                     }
                     vehicle->receiveTelemetry(msg);
