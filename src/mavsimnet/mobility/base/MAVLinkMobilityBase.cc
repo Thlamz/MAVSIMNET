@@ -85,21 +85,24 @@ void MAVLinkMobilityBase::establishConnection() {
 
     mavlink_message_t message;
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &message, &cmd);
-    queueMessage(message, TelemetryConditions::checkEmpty, 15, 5);
+    queueMessage(message, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem), 15, 5);
 }
 
 void MAVLinkMobilityBase::queueMessage(mavlink_message_t message, Condition condition, simtime_t timeout, int retries) {
     instructionQueue.push(Instruction{message, condition, timeout, retries, false});
+    nextMessageIfReady();
 }
 
 void MAVLinkMobilityBase::queueInstruction(Instruction instruction) {
     instructionQueue.push(instruction);
+    nextMessageIfReady();
 }
 
 void MAVLinkMobilityBase::queueInstructions(std::vector<Instruction> instructions) {
     for (Instruction instruction : instructions) {
         instructionQueue.push(instruction);
     }
+    nextMessageIfReady();
 }
 
 void MAVLinkMobilityBase::nextMessage() {
@@ -117,6 +120,12 @@ void MAVLinkMobilityBase::nextMessage() {
         if(getActiveTimeout() > 0) {
             scheduleAt(simTime() + getActiveTimeout(), timeoutMessage);
         }
+    }
+}
+
+void MAVLinkMobilityBase::nextMessageIfReady() {
+    if(!getActiveCondition() || getActiveCompleted()) {
+        nextMessage();
     }
 }
 
@@ -193,10 +202,12 @@ void MAVLinkMobilityBase::receiveTelemetry(mavlink_message_t message) {
 
     EV_DETAIL << "Received MAVLINK: " << message.msgid << std::endl;
     updatePosition(message);
-    if(!getActiveCondition() || getActiveCondition()(message)) {
+
+    if(getActiveCondition() && getActiveCondition()(message)) {
         activeInstruction.completed = true;
-        nextMessage();
     }
+
+    nextMessageIfReady();
 }
 
 MAVLinkMobilityBase::~MAVLinkMobilityBase() {

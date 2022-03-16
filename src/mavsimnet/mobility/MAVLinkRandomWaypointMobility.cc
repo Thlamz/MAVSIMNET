@@ -46,16 +46,17 @@ void MAVLinkRandomWaypointMobility::handleMessage(cMessage *msg)
 void MAVLinkRandomWaypointMobility::setTargetPosition(){
     targetPosition = getRandomPosition();
     GeoCoord geoCoords = coordinateSystem->computeGeographicCoordinate(targetPosition);
-    EV_INFO << "Random coordinates (x,y,z) - (lat, lon, alt): (" << targetPosition.x << "," << targetPosition.y << "," << targetPosition.z << ") - (" <<
+    EV_INFO << "New Random coordinates (x,y,z) - (lat, lon, alt): (" << targetPosition.x << "," << targetPosition.y << "," << targetPosition.z << ") - (" <<
             geoCoords.latitude.get() << "," << geoCoords.longitude.get() << "," << geoCoords.altitude.get() << ")" << std::endl;
 
-    queueInstructions(VehicleRoutines::guidedGoto(vehicleType, geoCoords.latitude.get(), geoCoords.longitude.get(), geoCoords.altitude.get(), coordinateSystem, targetSystem, targetComponent));
+    queueInstructions(VehicleRoutines::guidedGoto(vehicleType, geoCoords.latitude.get(), geoCoords.longitude.get(), geoCoords.altitude.get(),
+            coordinateSystem, targetSystem, targetComponent, -1, 1));
 }
 
 
 void MAVLinkRandomWaypointMobility::move() {
     if(targetPosition != Coord::NIL && getActiveCompleted() && !waypointChangeMessage->isScheduled()) {
-        EV_DETAIL << "Reached waypoint. Scheduling next random waypoint" << std::endl;
+        EV_INFO << "Reached waypoint. Scheduling next random waypoint" << std::endl;
         scheduleAt(simTime() + waitTime, waypointChangeMessage);
     }
 

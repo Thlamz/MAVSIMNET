@@ -6,13 +6,14 @@
  */
 
 #include "VehicleRoutines.h"
+#include <omnetpp.h>
 #include "mavlink/ardupilotmega/mavlink.h"
 #include "mavsimnet/utils/TelemetryConditions.h"
 
 namespace mavsimnet {
 namespace VehicleRoutines {
 
-std::vector<Instruction> armTakeoffCopter(float altitude, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> armTakeoffCopter(float altitude, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     std::vector<Instruction> instructions;
 
     mavlink_command_long_t cmd;
@@ -26,7 +27,7 @@ std::vector<Instruction> armTakeoffCopter(float altitude, uint8_t targetSystem, 
     cmd.target_system = targetSystem;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    instructions.push_back({msg, TelemetryConditions::getCheckPreArm(targetSystem), 30, 3});
+    instructions.push_back({msg, TelemetryConditions::getCheckPreArm(targetSystem), timeout, retries});
 
     cmd = {};
     cmd.command = MAV_CMD_COMPONENT_ARM_DISARM;
@@ -36,7 +37,7 @@ std::vector<Instruction> armTakeoffCopter(float altitude, uint8_t targetSystem, 
     cmd.target_system = 1;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    instructions.push_back({msg, TelemetryConditions::getCheckArm(targetSystem), 15, 3});
+    instructions.push_back({msg, TelemetryConditions::getCheckArm(targetSystem), timeout, retries});
 
     cmd = {};
     cmd.command = MAV_CMD_NAV_TAKEOFF;
@@ -46,12 +47,12 @@ std::vector<Instruction> armTakeoffCopter(float altitude, uint8_t targetSystem, 
     cmd.target_system = targetSystem;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    instructions.push_back({msg, TelemetryConditions::getCheckAltitude(25, 3, targetSystem), 30, 3});
+    instructions.push_back({msg, TelemetryConditions::getCheckAltitude(25, 3, targetSystem), timeout, });
 
     return instructions;
 }
 
-std::vector<Instruction> armTakeoffPlane(float altitude, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> armTakeoffPlane(float altitude, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     std::vector<Instruction> instructions;
 
     mavlink_command_long_t cmd;
@@ -65,9 +66,9 @@ std::vector<Instruction> armTakeoffPlane(float altitude, uint8_t targetSystem, u
         MAV_PARAM_TYPE_REAL32
     };
     mavlink_msg_param_set_encode(targetSystem, targetComponent, &msg, &set_altitude);
-    instructions.push_back({msg, TelemetryConditions::getCheckParamValue("TKOFF_ALT", altitude, targetSystem), 30, 3});
+    instructions.push_back({msg, TelemetryConditions::getCheckParamValue("TKOFF_ALT", altitude, targetSystem), timeout, retries});
 
-    for(Instruction instruction : setMode(PLANE, TAKEOFF, targetSystem, targetComponent)) {
+    for(Instruction instruction : setMode(PLANE, TAKEOFF, targetSystem, targetComponent, timeout, retries)) {
         instructions.push_back(instruction);
     }
 
@@ -79,21 +80,21 @@ std::vector<Instruction> armTakeoffPlane(float altitude, uint8_t targetSystem, u
     cmd.target_system = 1;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    instructions.push_back({msg, TelemetryConditions::getCheckAltitude(altitude, 3, targetSystem), 15, 3});
+    instructions.push_back({msg, TelemetryConditions::getCheckAltitude(altitude, 3, targetSystem), timeout, retries});
 
     return instructions;
 }
 
-std::vector<Instruction> armTakeoff(VehicleType type, float altitude, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> armTakeoff(VehicleType type, float altitude, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     switch(type) {
     case COPTER:
-        return armTakeoffCopter(altitude, targetSystem, targetComponent);
+        return armTakeoffCopter(altitude, targetSystem, targetComponent, timeout, retries);
     case PLANE:
-        return armTakeoffPlane(altitude, targetSystem, targetComponent);
+        return armTakeoffPlane(altitude, targetSystem, targetComponent, timeout, retries);
     }
 }
 
-std::vector<Instruction> setModeCopter(Mode mode, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> setModeCopter(Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     std::vector<Instruction> instructions;
     mavlink_command_long_t cmd;
     mavlink_message_t msg;
@@ -107,7 +108,7 @@ std::vector<Instruction> setModeCopter(Mode mode, uint8_t targetSystem, uint8_t 
         cmd.target_system = targetSystem;
 
         mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), 30, 3});
+        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries});
         break;
     case AUTO:
         cmd.command = MAV_CMD_DO_SET_MODE;
@@ -117,7 +118,7 @@ std::vector<Instruction> setModeCopter(Mode mode, uint8_t targetSystem, uint8_t 
         cmd.target_component = targetComponent;
         cmd.target_system = targetSystem;
         mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), 15, 3});
+        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries});
         break;
     case TAKEOFF:
         break;
@@ -125,7 +126,7 @@ std::vector<Instruction> setModeCopter(Mode mode, uint8_t targetSystem, uint8_t 
     return instructions;
 }
 
-std::vector<Instruction> setModePlane(Mode mode, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> setModePlane(Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     std::vector<Instruction> instructions;
     mavlink_command_long_t cmd;
     mavlink_message_t msg;
@@ -139,7 +140,7 @@ std::vector<Instruction> setModePlane(Mode mode, uint8_t targetSystem, uint8_t t
         cmd.target_system = targetSystem;
 
         mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), 30, 3});
+        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries});
         break;
     case AUTO:
         cmd.command = MAV_CMD_DO_SET_MODE;
@@ -149,7 +150,7 @@ std::vector<Instruction> setModePlane(Mode mode, uint8_t targetSystem, uint8_t t
         cmd.target_component = targetComponent;
         cmd.target_system = targetSystem;
         mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), 15, 3});
+        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries});
         break;
     case TAKEOFF:
         cmd.command = MAV_CMD_DO_SET_MODE;
@@ -159,23 +160,24 @@ std::vector<Instruction> setModePlane(Mode mode, uint8_t targetSystem, uint8_t t
         cmd.target_component = targetComponent;
         cmd.target_system = targetSystem;
         mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), 15, 3});
+        instructions.push_back({msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries});
         break;
     }
     return instructions;
 }
 
-std::vector<Instruction> setMode(VehicleType type, Mode mode, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> setMode(VehicleType type, Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     switch(type) {
     case COPTER:
-        return setModeCopter(mode, targetSystem, targetComponent);
+        return setModeCopter(mode, targetSystem, targetComponent, timeout, retries);
     case PLANE:
-        return setModePlane(mode, targetSystem, targetComponent);
+        return setModePlane(mode, targetSystem, targetComponent, timeout, retries);
     }
 }
 
 // https://ardupilot.org/dev/docs/copter-commands-in-guided-mode.html
-std::vector<Instruction> guidedGotoCopter(double latitude, double longitude, float altitude, inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> guidedGotoCopter(double latitude, double longitude, float altitude, inet::IGeographicCoordinateSystem *coordinateSystem,
+        uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     std::vector<Instruction> instructions;
 
     mavlink_set_position_target_global_int_t position_command;
@@ -191,20 +193,20 @@ std::vector<Instruction> guidedGotoCopter(double latitude, double longitude, flo
 
     mavlink_message_t msg;
     mavlink_msg_set_position_target_global_int_encode(targetSystem, targetComponent, &msg, &position_command);
-    instructions.push_back({msg, TelemetryConditions::getCheckGlobalPosition(latitude, longitude, altitude, 5, coordinateSystem, targetSystem), 15, 3});
+    instructions.push_back({msg, TelemetryConditions::getCheckGlobalPosition(latitude, longitude, altitude, 5, coordinateSystem, targetSystem), timeout, retries});
 
     return instructions;
 }
 
 // https://ardupilot.org/dev/docs/plane-commands-in-guided-mode.html
-std::vector<Instruction> guidedGotoPlane(double latitude, double longitude, float altitude, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> guidedGotoPlane(double latitude, double longitude, float altitude, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     std::vector<Instruction> instructions;
 
     mavlink_mission_item_int_t missionItem;
     missionItem.target_system = targetSystem;
     missionItem.target_component = targetComponent;
-    missionItem.x = latitude * (1e7);
-    missionItem.y = longitude * (1e7);
+    missionItem.x = longitude * (1e7);
+    missionItem.y = latitude * (1e7);
     missionItem.z = altitude;
     missionItem.command = MAV_CMD_NAV_WAYPOINT;
     missionItem.frame = MAV_FRAME_GLOBAL_TERRAIN_ALT_INT;
@@ -212,17 +214,19 @@ std::vector<Instruction> guidedGotoPlane(double latitude, double longitude, floa
 
     mavlink_message_t msg;
     mavlink_msg_mission_item_int_encode(targetSystem, targetComponent, &msg, &missionItem);
-    instructions.push_back({msg, TelemetryConditions::getCheckMissionItemReached(0, targetSystem), 15, 3});
+
+    instructions.push_back({msg, TelemetryConditions::getCheckMissionItemReached(0, targetSystem), timeout, retries});
 
     return instructions;
 }
 
-std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t targetSystem, uint8_t targetComponent) {
+std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, inet::IGeographicCoordinateSystem *coordinateSystem,
+        uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     switch(type) {
     case COPTER:
-        return guidedGotoCopter(latitude, longitude, altitude, coordinateSystem, targetSystem, targetComponent);
+        return guidedGotoCopter(latitude, longitude, altitude, coordinateSystem, targetSystem, targetComponent, timeout, retries);
     case PLANE:
-        return guidedGotoPlane(latitude, longitude, altitude, targetSystem, targetComponent);
+        return guidedGotoPlane(latitude, longitude, altitude, targetSystem, targetComponent, timeout, retries);
     }
 }
 

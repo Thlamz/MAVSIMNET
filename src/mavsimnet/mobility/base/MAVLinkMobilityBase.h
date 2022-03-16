@@ -48,6 +48,7 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     virtual void clearQueue();
 
     virtual void nextMessage();
+    virtual void nextMessageIfReady();
     virtual void sendMessage(mavlink_message_t message, int &currentTries, int maxRetries);
 
     mavlink_message_t getActiveMessage() { return activeInstruction.message; };
