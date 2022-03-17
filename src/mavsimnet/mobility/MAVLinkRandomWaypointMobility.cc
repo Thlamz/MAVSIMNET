@@ -70,7 +70,7 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     mavlink_message_t msg;
     
     // Commanding the vehicle to takeoff
-    queueInstructions(VehicleRoutines::armTakeoff(vehicleType, 50, targetSystem, targetComponent, 15, 3));
+    queueInstructions(VehicleRoutines::armTakeoff(vehicleType, 50, targetSystem, targetComponent, 30, 3));
 
     // Setting mode to guided, to prepare for random waypoint instructions
     queueInstructions(VehicleRoutines::setMode(vehicleType, VehicleRoutines::GUIDED, targetSystem, targetComponent));
@@ -88,15 +88,18 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_CHANGE_SPEED, targetSystem), 15, 3);
 
     // Setting the waypoint radius
-    mavlink_param_set_t set_radius {
-        static_cast<float>(waypointRadius),
-        targetSystem,
-        targetComponent,
-        "WP_LOITER_RAD",
-        MAV_PARAM_TYPE_INT16
-    };
-    mavlink_msg_param_set_encode(targetSystem, targetComponent, &msg, &set_radius);
-    queueMessage(msg, TelemetryConditions::getCheckParamValue("WP_LOITER_RAD", waypointRadius, targetSystem), 15, 3);
+    // This is only necessary on the Plane vehicle because it tries to loiter around the waypoint instead of flying directly to it
+    if(vehicleType == PLANE) {
+        mavlink_param_set_t set_radius {
+            static_cast<float>(waypointRadius),
+            targetSystem,
+            targetComponent,
+            "WP_LOITER_RAD",
+            MAV_PARAM_TYPE_INT16
+        };
+        mavlink_msg_param_set_encode(targetSystem, targetComponent, &msg, &set_radius);
+        queueMessage(msg, TelemetryConditions::getCheckParamValue("WP_LOITER_RAD", waypointRadius, targetSystem), 15, 3);
+    }
 
 }
 

@@ -31,7 +31,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffCopter(float altitude, uint8
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
     instructions.push_back(std::make_shared<Instruction>(msg, TelemetryConditions::getCheckPreArm(targetSystem), timeout, retries));
 
-    cmd = { };
+    cmd = {};
     cmd.command = MAV_CMD_COMPONENT_ARM_DISARM;
     cmd.confirmation = 0;
     cmd.param1 = 1;
@@ -41,7 +41,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffCopter(float altitude, uint8
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
     instructions.push_back(std::make_shared<Instruction>(msg, TelemetryConditions::getCheckArm(targetSystem), timeout, retries));
 
-    cmd = { };
+    cmd = {};
     cmd.command = MAV_CMD_NAV_TAKEOFF;
     cmd.confirmation = 0;
     cmd.param7 = altitude;
