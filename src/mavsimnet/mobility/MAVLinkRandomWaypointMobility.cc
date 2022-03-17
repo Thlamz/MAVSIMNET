@@ -89,7 +89,7 @@ void MAVLinkRandomWaypointMobility::startMovement() {
 
     // Setting the waypoint radius
     mavlink_param_set_t set_radius {
-        waypointRadius,
+        static_cast<float>(waypointRadius),
         targetSystem,
         targetComponent,
         "WP_LOITER_RAD",

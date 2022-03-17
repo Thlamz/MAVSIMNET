@@ -31,11 +31,10 @@ void MAVLinkMobilityBase::initialize(int stage)
         targetSystem = par("targetSystem");
         targetComponent = par("targetComponent");
         vehicleType = static_cast<VehicleType>(par("vehicleType").intValue());
-        std::cout << vehicleType << std::endl;
         manager = getModuleFromPar<MAVLinkManager>(par("managerModule"), this, true);
         coordinateSystem = getModuleFromPar<IGeographicCoordinateSystem>(par("coordinateSystemModule"), this, true);
         manager->registerVehicle(this, targetSystem, targetComponent);
-        establishConnection();
+        setUpdateRate();
     }
 
     if (stage == 1) {
@@ -51,7 +50,7 @@ void MAVLinkMobilityBase::handleMessage(cMessage *msg) {
                     if(activeInstructionTries < getActiveRetries()) {
                         EV_WARN << "Timeout reached" << std::endl;
                         activeInstructionTries++;
-                        sendMessage(activeInstruction);
+                        sendActiveMessage();
 
                         // Setting up timeout again if there are any retries left
                         if(getActiveTimeout() > 0) {
@@ -72,7 +71,7 @@ void MAVLinkMobilityBase::handleMessage(cMessage *msg) {
 
 
 
-void MAVLinkMobilityBase::establishConnection() {
+void MAVLinkMobilityBase::setUpdateRate() {
     EV_INFO << "Setting STREAM RATE FOR POSITION" << std::endl;
     mavlink_command_long_t cmd;
     cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
@@ -89,15 +88,15 @@ void MAVLinkMobilityBase::establishConnection() {
 }
 
 void MAVLinkMobilityBase::queueMessage(mavlink_message_t message, Condition condition, simtime_t timeout, int retries) {
-    instructionQueue.push({message, condition, timeout, retries});
+    instructionQueue.push(std::make_shared<Instruction>(message, condition, timeout, retries));
 }
 
-void MAVLinkMobilityBase::queueInstruction(Instruction instruction) {
+void MAVLinkMobilityBase::queueInstruction(std::shared_ptr<Instruction> instruction) {
     instructionQueue.push(instruction);
 }
 
-void MAVLinkMobilityBase::queueInstructions(std::vector<Instruction> instructions) {
-    for (Instruction instruction : instructions) {
+void MAVLinkMobilityBase::queueInstructions(std::vector<std::shared_ptr<Instruction>> instructions) {
+    for (std::shared_ptr<Instruction> instruction : instructions) {
         instructionQueue.push(instruction);
     }
 }
@@ -109,9 +108,8 @@ void MAVLinkMobilityBase::nextMessage() {
     if(instructionQueue.size() > 0) {
         activeInstructionTries = 0;
         activeInstruction = instructionQueue.front();
-        activeInstruction.completed = false;
         instructionQueue.pop();
-        sendMessage(activeInstruction);
+        sendActiveMessage();
 
         // Setting up timeout
         if(getActiveTimeout() > 0) {
@@ -129,16 +127,24 @@ void MAVLinkMobilityBase::nextMessageIfReady() {
 void MAVLinkMobilityBase::clearQueue() {
     EV_DETAIL << "Clearing message queue" << std::endl;
 
-    activeInstruction = {};
+    activeInstruction = nullptr;
     instructionQueue = {};
     activeInstructionTries = 0;
 }
 
-void MAVLinkMobilityBase::sendMessage(Instruction instruction) {
-    sendMessage(getActiveMessage(), activeInstructionTries, getActiveRetries());
+bool MAVLinkMobilityBase::sendActiveMessage() {
+    if(activeInstruction != nullptr) {
+        bool success = sendMessage(getActiveMessage(), getActiveTimeout() == 0,activeInstructionTries, getActiveRetries());
+        if(!success && getActiveTimeout() == 0) {
+            nextMessage();
+            return false;
+        }
+        return success;
+    }
+    return false;
 }
 
-void MAVLinkMobilityBase::sendMessage(mavlink_message_t message, int &currentTries, int maxRetries) {
+bool MAVLinkMobilityBase::sendMessage(const mavlink_message_t& message, bool shouldRetry, int &currentTries, int maxRetries) {
     EV_INFO << "Sending message: " << message.msgid << std::endl;
     do {
         if(currentTries >= 1) {
@@ -147,20 +153,20 @@ void MAVLinkMobilityBase::sendMessage(mavlink_message_t message, int &currentTri
 
         if(!manager->sendMessage(message, targetSystem)) {
             EV_WARN << "Failed to send message" << std::endl;
-            if (getActiveTimeout() == 0) {
+            if (shouldRetry == true) {
                 currentTries++;
                 continue;
             } else {
-                return;
+                return false;
             }
             continue;
         } else {
             EV_INFO << "Message sent: " << message.msgid << std::endl;
-            return;
+            return true;
         }
     } while(currentTries < maxRetries);
     EV_WARN << "Max retries reached: " << activeInstructionTries << std::endl;
-    nextMessage();
+    return false;
 }
 
 void MAVLinkMobilityBase::move() {
@@ -173,7 +179,7 @@ void MAVLinkMobilityBase::orient() {
 }
 
 
-void MAVLinkMobilityBase::updatePosition(mavlink_message_t msg) {
+void MAVLinkMobilityBase::updatePosition(const mavlink_message_t& msg) {
     // Updating vehicle position
     if(msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT) {
         mavlink_global_position_int_t position;
@@ -200,8 +206,8 @@ void MAVLinkMobilityBase::receiveTelemetry(mavlink_message_t message) {
     EV_DETAIL << "Received MAVLINK: " << message.msgid << std::endl;
     updatePosition(message);
 
-    if(getActiveCondition() && getActiveCondition()(message)) {
-        activeInstruction.completed = true;
+    if(getActiveCondition() && getActiveCondition()(message) && activeInstruction != nullptr) {
+        activeInstruction->completed = true;
     }
 
     nextMessageIfReady();

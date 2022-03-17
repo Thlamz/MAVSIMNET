@@ -19,6 +19,7 @@
 #include <omnetpp.h>
 #include <queue>
 #include <functional>
+#include <memory>
 #include "inet/mobility/base/MovingMobilityBase.h"
 #include "inet/common/geometry/common/GeographicCoordinateSystem.h"
 #include "mavlink/ardupilotmega/mavlink.h"
@@ -39,25 +40,28 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     virtual void move() override;
     virtual void orient() override;
 
-    virtual void establishConnection();
-    virtual void sendMessage(Instruction instruction);
-    virtual void updatePosition(mavlink_message_t message);
+    // Sets the update rate for position messages
+    virtual void setUpdateRate();
+    virtual void updatePosition(const mavlink_message_t& message);
     virtual void queueMessage(mavlink_message_t message, Condition condition = {}, simtime_t timeout = -1, int retries = 0);
-    virtual void queueInstruction(Instruction instruction);
-    virtual void queueInstructions(std::vector<Instruction> instructions);
+    virtual void queueInstruction(std::shared_ptr<Instruction> instruction);
+    virtual void queueInstructions(std::vector<std::shared_ptr<Instruction>> instructions);
     virtual int queueSize() { return instructionQueue.size(); }
     virtual void clearQueue();
 
     virtual void nextMessage();
     virtual void nextMessageIfReady();
-    virtual void sendMessage(mavlink_message_t message, int &currentTries, int maxRetries);
+    // Sends the current active instruction
+    virtual bool sendActiveMessage();
+    // Sends a message and returns if successful
+    virtual bool sendMessage(const mavlink_message_t& message, bool shouldRetry, int &currentTries, int maxRetries);
 
-    mavlink_message_t getActiveMessage() { return activeInstruction.message; };
-    Condition getActiveCondition() { return activeInstruction.condition; };
-    simtime_t getActiveTimeout() { return activeInstruction.timeout; };
-    int getActiveRetries() { return activeInstruction.retries; };
-    bool getActiveCompleted() { return activeInstruction.completed; };
-    Coord getCurrentCoord() { return currentPosition; }
+    mavlink_message_t getActiveMessage() { return (activeInstruction != nullptr) ? activeInstruction->message : mavlink_message_t{}; };
+    Condition getActiveCondition() { return (activeInstruction != nullptr) ? activeInstruction->condition : Condition{}; };
+    simtime_t getActiveTimeout() { return (activeInstruction != nullptr) ? activeInstruction->timeout : 0; };
+    int getActiveRetries() { return (activeInstruction != nullptr) ? activeInstruction->retries : 0; };
+    bool getActiveCompleted() { return (activeInstruction != nullptr) ? activeInstruction->completed : false; };
+    Coord getCurrentCoord() { return (activeInstruction != nullptr) ? currentPosition : Coord{}; }
 
     ~MAVLinkMobilityBase();
 
@@ -74,9 +78,9 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     IGeographicCoordinateSystem *coordinateSystem;
   private:
     int fd;
-    std::queue<Instruction> instructionQueue;
+    std::queue<std::shared_ptr<Instruction>> instructionQueue;
 
-    Instruction activeInstruction;
+    std::shared_ptr<Instruction> activeInstruction = nullptr;
     int activeInstructionTries = 0;
 
     cMessage *timeoutMessage = new cMessage("MAVLinkMobilityBaseMessage", CommunicationSelfMessages::TIMEOUT);
