@@ -47,7 +47,7 @@ std::vector<Instruction> armTakeoffCopter(float altitude, uint8_t targetSystem, 
     cmd.target_system = targetSystem;
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    instructions.push_back({msg, TelemetryConditions::getCheckAltitude(25, 3, targetSystem), timeout, });
+    instructions.push_back({msg, TelemetryConditions::getCheckAltitude(25, 3, targetSystem), timeout, retries});
 
     return instructions;
 }
@@ -176,7 +176,7 @@ std::vector<Instruction> setMode(VehicleType type, Mode mode, uint8_t targetSyst
 }
 
 // https://ardupilot.org/dev/docs/copter-commands-in-guided-mode.html
-std::vector<Instruction> guidedGotoCopter(double latitude, double longitude, float altitude, inet::IGeographicCoordinateSystem *coordinateSystem,
+std::vector<Instruction> guidedGotoCopter(double latitude, double longitude, float altitude, double tolerance, inet::IGeographicCoordinateSystem *coordinateSystem,
         uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     std::vector<Instruction> instructions;
 
@@ -193,40 +193,41 @@ std::vector<Instruction> guidedGotoCopter(double latitude, double longitude, flo
 
     mavlink_message_t msg;
     mavlink_msg_set_position_target_global_int_encode(targetSystem, targetComponent, &msg, &position_command);
-    instructions.push_back({msg, TelemetryConditions::getCheckGlobalPosition(latitude, longitude, altitude, 5, coordinateSystem, targetSystem), timeout, retries});
+    instructions.push_back({msg, TelemetryConditions::getCheckGlobalPosition(latitude, longitude, altitude, tolerance, coordinateSystem, targetSystem), timeout, retries});
 
     return instructions;
 }
 
 // https://ardupilot.org/dev/docs/plane-commands-in-guided-mode.html
-std::vector<Instruction> guidedGotoPlane(double latitude, double longitude, float altitude, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
+std::vector<Instruction> guidedGotoPlane(double latitude, double longitude, float altitude, double tolerance, inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     std::vector<Instruction> instructions;
 
-    mavlink_mission_item_int_t missionItem;
+    mavlink_mission_item_t missionItem;
     missionItem.target_system = targetSystem;
     missionItem.target_component = targetComponent;
-    missionItem.x = longitude * (1e7);
-    missionItem.y = latitude * (1e7);
+    missionItem.x = latitude;
+    missionItem.y = longitude;
     missionItem.z = altitude;
     missionItem.command = MAV_CMD_NAV_WAYPOINT;
-    missionItem.frame = MAV_FRAME_GLOBAL_TERRAIN_ALT_INT;
+    missionItem.frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
     missionItem.current = 2; // Current 2 to indicate goto command
+    missionItem.autocontinue = 1;
 
     mavlink_message_t msg;
-    mavlink_msg_mission_item_int_encode(targetSystem, targetComponent, &msg, &missionItem);
+    mavlink_msg_mission_item_encode(targetSystem, targetComponent, &msg, &missionItem);
 
-    instructions.push_back({msg, TelemetryConditions::getCheckMissionItemReached(0, targetSystem), timeout, retries});
+    instructions.push_back({msg, TelemetryConditions::getCheckGlobalPosition(latitude, longitude, altitude, tolerance, coordinateSystem, targetSystem), timeout, retries});
 
     return instructions;
 }
 
-std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, inet::IGeographicCoordinateSystem *coordinateSystem,
+std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, double tolerance, inet::IGeographicCoordinateSystem *coordinateSystem,
         uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries) {
     switch(type) {
     case COPTER:
-        return guidedGotoCopter(latitude, longitude, altitude, coordinateSystem, targetSystem, targetComponent, timeout, retries);
+        return guidedGotoCopter(latitude, longitude, altitude, tolerance, coordinateSystem, targetSystem, targetComponent, timeout, retries);
     case PLANE:
-        return guidedGotoPlane(latitude, longitude, altitude, targetSystem, targetComponent, timeout, retries);
+        return guidedGotoPlane(latitude, longitude, altitude, tolerance, coordinateSystem, targetSystem, targetComponent, timeout, retries);
     }
 }
 

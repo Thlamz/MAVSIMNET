@@ -45,6 +45,7 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     virtual void queueMessage(mavlink_message_t message, Condition condition = {}, simtime_t timeout = -1, int retries = 0);
     virtual void queueInstruction(Instruction instruction);
     virtual void queueInstructions(std::vector<Instruction> instructions);
+    virtual int queueSize() { return instructionQueue.size(); }
     virtual void clearQueue();
 
     virtual void nextMessage();

@@ -30,6 +30,7 @@ void MAVLinkRandomWaypointMobility::initialize(int stage)
     if (stage == 0) {
         speed = par("speed");
         waitTime = par("waitTime");
+        waypointRadius = par("waypointRadius");
         startMovement();
         setTargetPosition();
     }
@@ -49,13 +50,14 @@ void MAVLinkRandomWaypointMobility::setTargetPosition(){
     EV_INFO << "New Random coordinates (x,y,z) - (lat, lon, alt): (" << targetPosition.x << "," << targetPosition.y << "," << targetPosition.z << ") - (" <<
             geoCoords.latitude.get() << "," << geoCoords.longitude.get() << "," << geoCoords.altitude.get() << ")" << std::endl;
 
-    queueInstructions(VehicleRoutines::guidedGoto(vehicleType, geoCoords.latitude.get(), geoCoords.longitude.get(), geoCoords.altitude.get(),
+    // Using a tolerance of double the radius to account for imprecision in the vehicle's movement
+    queueInstructions(VehicleRoutines::guidedGoto(vehicleType, geoCoords.latitude.get(), geoCoords.longitude.get(), geoCoords.altitude.get(), waypointRadius * 2,
             coordinateSystem, targetSystem, targetComponent, -1, 1));
 }
 
 
 void MAVLinkRandomWaypointMobility::move() {
-    if(targetPosition != Coord::NIL && getActiveCompleted() && !waypointChangeMessage->isScheduled()) {
+    if(targetPosition != Coord::NIL && getActiveCompleted() && queueSize() == 0 && !waypointChangeMessage->isScheduled()) {
         EV_INFO << "Reached waypoint. Scheduling next random waypoint" << std::endl;
         scheduleAt(simTime() + waitTime, waypointChangeMessage);
     }
@@ -68,7 +70,7 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     mavlink_message_t msg;
     
     // Commanding the vehicle to takeoff
-    queueInstructions(VehicleRoutines::armTakeoff(vehicleType, 50, targetSystem, targetComponent));
+    queueInstructions(VehicleRoutines::armTakeoff(vehicleType, 50, targetSystem, targetComponent, 15, 3));
 
     // Setting mode to guided, to prepare for random waypoint instructions
     queueInstructions(VehicleRoutines::setMode(vehicleType, VehicleRoutines::GUIDED, targetSystem, targetComponent));
@@ -84,6 +86,17 @@ void MAVLinkRandomWaypointMobility::startMovement() {
 
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
     queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_CHANGE_SPEED, targetSystem), 15, 3);
+
+    // Setting the waypoint radius
+    mavlink_param_set_t set_radius {
+        waypointRadius,
+        targetSystem,
+        targetComponent,
+        "WP_LOITER_RAD",
+        MAV_PARAM_TYPE_INT16
+    };
+    mavlink_msg_param_set_encode(targetSystem, targetComponent, &msg, &set_radius);
+    queueMessage(msg, TelemetryConditions::getCheckParamValue("WP_LOITER_RAD", waypointRadius, targetSystem), 15, 3);
 
 }
 

@@ -89,20 +89,17 @@ void MAVLinkMobilityBase::establishConnection() {
 }
 
 void MAVLinkMobilityBase::queueMessage(mavlink_message_t message, Condition condition, simtime_t timeout, int retries) {
-    instructionQueue.push(Instruction{message, condition, timeout, retries, false});
-    nextMessageIfReady();
+    instructionQueue.push({message, condition, timeout, retries});
 }
 
 void MAVLinkMobilityBase::queueInstruction(Instruction instruction) {
     instructionQueue.push(instruction);
-    nextMessageIfReady();
 }
 
 void MAVLinkMobilityBase::queueInstructions(std::vector<Instruction> instructions) {
     for (Instruction instruction : instructions) {
         instructionQueue.push(instruction);
     }
-    nextMessageIfReady();
 }
 
 void MAVLinkMobilityBase::nextMessage() {
@@ -112,8 +109,8 @@ void MAVLinkMobilityBase::nextMessage() {
     if(instructionQueue.size() > 0) {
         activeInstructionTries = 0;
         activeInstruction = instructionQueue.front();
+        activeInstruction.completed = false;
         instructionQueue.pop();
-
         sendMessage(activeInstruction);
 
         // Setting up timeout

@@ -32,6 +32,7 @@ class MAVLinkRandomWaypointMobility : public MAVLinkMobilityBase
 protected:
     double speed;
     simtime_t waitTime;
+    double waypointRadius;
     omnetpp::cMessage *waypointChangeMessage = new cMessage("waypointChangeMessage");
     Coord targetPosition = Coord::NIL;
 protected:

@@ -167,11 +167,11 @@ std::function<bool(mavlink_message_t)> getCheckGlobalPosition(float lat, float l
             mavlink_global_position_int_t position;
             mavlink_msg_global_position_int_decode(&msg,&position);
 
-            inet::GeoCoord currentCoord(inet::deg(position.lat/(1e7)), inet::deg(position.lon/(1e7)), inet::m(position.alt));
+            inet::GeoCoord currentCoord(inet::deg(position.lat/1e7), inet::deg(position.lon/1e7), inet::m(position.relative_alt / 1e3));
 
             return coordinateSystem->computeSceneCoordinate(currentCoord).distance(targetCoords) <= tolerance;
         }
-
+        return false;
     };
 }
 

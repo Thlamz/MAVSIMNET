@@ -26,7 +26,7 @@ enum Mode {
 std::vector<Instruction> setMode(VehicleType type, Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout=60, int retries=3);
 
 /* GUIDED MODE COMMANDS */
-std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude,
+std::vector<Instruction> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, double tolerance,
         inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout=60, int retries=3);
 }
 }
