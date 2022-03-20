@@ -50,17 +50,19 @@ void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
         command << shellCommand << " \"";
     }
 
-    std::string vehicleTypeSimulator;
+    std::string simulatorForVehicleType;
     switch(vehicleType) {
     case COPTER:
-        vehicleTypeSimulator = "ArduCopter";
+        simulatorForVehicleType = "ArduCopter";
         break;
     case PLANE:
-        vehicleTypeSimulator = "ArduPlane";
+        simulatorForVehicleType = "ArduPlane";
         break;
+    case ROVER:
+        simulatorForVehicleType = "Rover";
     }
 
-    command << simulatorPath << " -N -v " << vehicleTypeSimulator <<" -I " << +systemId << " --sysid " << +systemId << " --out 127.0.0.1:" << connectionPort << " & ";;
+    command << simulatorPath << " -N -v " << simulatorForVehicleType <<" -I " << +systemId << " --sysid " << +systemId << " --out 127.0.0.1:" << connectionPort << " & ";;
     if(!shellCommand.empty()) {
         command << "\"";
     }

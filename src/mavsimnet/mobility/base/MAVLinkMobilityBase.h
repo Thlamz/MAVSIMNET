@@ -40,8 +40,8 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     virtual void move() override;
     virtual void orient() override;
 
-    // Sets the update rate for position messages
-    virtual void setUpdateRate();
+    // Performs initial setup on the vehicle. This includes setting update rate and setting home to current position
+    virtual void performInitialSetup();
     virtual void updatePosition(const mavlink_message_t& message);
     virtual void queueMessage(mavlink_message_t message, Condition condition = {}, simtime_t timeout = -1, int retries = 0);
     virtual void queueInstruction(std::shared_ptr<Instruction> instruction);

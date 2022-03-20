@@ -28,6 +28,7 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
         // MAVLink type of vehicle that this class represents
         // COPTER=1
         // PLANE=2 
+        // ROVER=4
         int vehicleType = default(1); 
         
 }

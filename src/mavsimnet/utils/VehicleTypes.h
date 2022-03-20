@@ -13,7 +13,8 @@ namespace mavsimnet {
 
 enum VehicleType: unsigned int {
     COPTER = 1,
-    PLANE = 1<<1
+    PLANE = 1<<1,
+    ROVER = 1<<2
 };
 
 }
