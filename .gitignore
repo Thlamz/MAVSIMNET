@@ -3,3 +3,9 @@
 **/cache/*
 *.exe
 *.dll
+**logs/*
+*.bin
+*.tlog
+*.raw
+*.parm
+*.DAT
