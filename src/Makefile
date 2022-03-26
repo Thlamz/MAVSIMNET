@@ -30,7 +30,10 @@ OBJS = \
     $O/mavsimnet/mobility/MAVLinkRandomWaypointMobility.o \
     $O/mavsimnet/mobility/base/MAVLinkMobilityBase.o \
     $O/mavsimnet/utils/TelemetryConditions.o \
-    $O/mavsimnet/utils/VehicleRoutines.o
+    $O/mavsimnet/utils/VehicleRoutines.o \
+    $O/mavsimnet/utils/subprocess/process.o \
+    $O/mavsimnet/utils/subprocess/process_unix.o \
+    $O/mavsimnet/utils/subprocess/process_win.o
 
 # Message files
 MSGFILES =

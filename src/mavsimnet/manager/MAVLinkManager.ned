@@ -35,20 +35,22 @@ simple MAVLinkManager
     parameters:
         @class(MAVLinkManager);
         // System ID of this GCS
-    	int systemId = default(255);
+    	int systemId = default(235);
     	// Component ID of this GCS
-        int componentId = default(255);
+        int componentId = default(235);
         // Port that MAVProxy should use
         int connectionPort = default(5505);
-        // Command to run the shell used to execute SITL. 
-        // You should leave this empty unless you are using some integrated environment like Cygwin
-        // The commands called will be formed as: shellCommand "SITLPath -arguments"
-        string shellCommand = default("");
-        // Path to the sim_vehicle.py file in your SITL installation. Required
-		string simulatorPath = default("");
-		// Path to your MAVProxy installation
-		// This is not necessary if your MAVProxy installation is already in the PATH environment variable.
-		// Beware that if you are running OMNeT++ on windows on mingw your environment variables are overriden, and you should specify this.
-        string MAVProxyPath = default("");
+        // Base port for the SITL simulators
+        int basePort = default(5605);
+        // Path to your prefered shell
+        string shellPath;
+        // Path to the ArduCopter binary
+		string copterSimulatorPath = default("");
+		// Path to the ArduPlane binary
+		string planeSimulatorPath = default("");
+		// Path to the Rover binary
+		string roverSimulatorPath = default("");
+		// Command to open MAVProxy. On windows it should be "start MAVPROXY_PATH.exe" where MAVPROXY_PATH.exe is the path to the mavproxy.exe file in your MAVProxy installation
+        string MAVProxyCommand;
 		
 }

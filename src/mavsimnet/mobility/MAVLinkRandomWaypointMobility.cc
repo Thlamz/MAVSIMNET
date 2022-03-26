@@ -31,6 +31,9 @@ void MAVLinkRandomWaypointMobility::initialize(int stage)
         speed = par("speed");
         waitTime = par("waitTime");
         waypointRadius = par("waypointRadius");
+    }
+
+    if (stage == 1) {
         startMovement();
         setTargetPosition();
     }

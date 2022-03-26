@@ -36,7 +36,8 @@ std::function<bool(mavlink_message_t)> getCheckCmdAck(uint8_t systemId, uint8_t 
             mavlink_command_ack_t ack;
 
             mavlink_msg_command_ack_decode(&message, &ack);
-            return (ack.command == command && ack.result == MAV_RESULT_ACCEPTED && ack.target_system == systemId && ack.target_component == componentId);
+            std::cout << "ACK: " << +ack.command << " " << +ack.result << " " << +ack.target_system << " " << +systemId << " " << +ack.target_component << " " << +componentId << " " << std::endl;
+            return (ack.command == command && ack.result == MAV_RESULT_ACCEPTED && (ack.target_system == systemId || ack.target_system == 0));
         }
         return false;
     };
@@ -120,7 +121,7 @@ std::function<bool(mavlink_message_t)> getCheckMissionRequest(uint8_t systemId, 
         else if(msg.msgid == MAVLINK_MSG_ID_MISSION_REQUEST && verifySender(msg, senderSystemId)) {
             mavlink_mission_request_t request;
             mavlink_msg_mission_request_decode(&msg, &request);
-            return (request.seq == sequenceNumber) && (request.target_system == systemId) && (request.target_component == componentId);
+            return (request.seq == sequenceNumber) && (request.target_system == systemId || request.target_system == 0);
         }
         return false;
     };
@@ -131,7 +132,7 @@ std::function<bool(mavlink_message_t)> getCheckMissionAck(uint8_t systemId, uint
         if(msg.msgid == MAVLINK_MSG_ID_MISSION_ACK && verifySender(msg, senderSystemId)) {
                 mavlink_mission_ack_t ack;
                 mavlink_msg_mission_ack_decode(&msg, &ack);
-                return (ack.type == MAV_MISSION_ACCEPTED && ack.target_system == systemId && ack.target_component == componentId);
+                return (ack.type == MAV_MISSION_ACCEPTED) && (ack.target_system == systemId || ack.target_system == 0) ;
         }
         return false;
     };

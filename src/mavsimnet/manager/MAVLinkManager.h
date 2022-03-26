@@ -17,6 +17,8 @@
 #define __RT_EXPERIMENT_MAVLINKMANAGER_H_
 
 #include <omnetpp.h>
+#include <memory>
+#include <mavsimnet/utils/subprocess/process.h>
 #include "inet/common/scheduler/RealTimeScheduler.h"
 #include "mavsimnet/utils/VehicleTypes.h"
 #include "mavlink/ardupilotmega/mavlink.h"
@@ -27,7 +29,7 @@ using namespace inet;
 namespace mavsimnet {
 
 
-typedef std::tuple<uint8_t, uint8_t> VehicleEntry;
+typedef std::pair<uint8_t, uint8_t> VehicleEntry;
 class MAVLinkManager : public cSimpleModule, public RealTimeScheduler::ICallback
 {
 public:
@@ -37,6 +39,7 @@ public:
         VehicleType vehicleType;
     };
 
+    virtual void startMAVProxy();
     virtual void startSimulator(VehicleType vehicleType, uint8_t systemId);
     virtual void registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId);
     virtual bool sendMessage(const mavlink_message_t& message, uint8_t destinationId);
@@ -44,23 +47,28 @@ public:
 
     virtual uint8_t getSystemId() { return systemId; };
     virtual uint8_t getComponentId() { return componentId; };
-    ~MAVLinkManager();
 
 protected:
     virtual void initialize(int stage) override;
+    virtual void finish() override;
     virtual int numInitStages() const override;
-    virtual void openSocket();
+    virtual void openSocket(VehicleEntry vehicle, int port);
+    virtual std::string setupParams(VehicleType type);
 
 protected:
     uint8_t systemId, componentId;
-    int fd, connectionPort;
+    int connectionPort, basePort;
+    std::vector<std::pair<VehicleEntry, int>> sockets;
     char buf[256];
     RealTimeScheduler *rtScheduler;
-    std::map<uint8_t, struct sockaddr_in> addressMap;
     std::map<VehicleEntry, IMAVLinkVehicle*> registeredVehicles;
-    std::string shellCommand;
-    std::string simulatorPath;
-    std::string MAVProxyPath;
+    std::vector<TinyProcessLib::Process*> simulatorProcesses;
+    TinyProcessLib::Process* MAVProxyProcess;
+    std::string copterSimulatorPath;
+    std::string planeSimulatorPath;
+    std::string roverSimulatorPath;
+    std::string shellPath;
+    std::string MAVProxyCommand;
 
 private:
 

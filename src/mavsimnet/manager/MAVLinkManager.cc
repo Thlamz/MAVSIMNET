@@ -22,63 +22,142 @@ Define_Module(MAVLinkManager);
 
 void MAVLinkManager::initialize(int stage) {
     if (stage == INITSTAGE_LOCAL) {
+        systemId = par("systemId");
+        componentId = par("componentId");
+
         rtScheduler = check_and_cast<inet::RealTimeScheduler *>(getSimulation()->getScheduler());
         connectionPort = par("connectionPort");
+        basePort = par("basePort");
 
-        shellCommand = par("shellCommand").stdstringValue();
-        simulatorPath = par("simulatorPath").stdstringValue();
-        MAVProxyPath = par("MAVProxyPath").stdstringValue();
+        copterSimulatorPath = par("copterSimulatorPath").stdstringValue();
+        planeSimulatorPath = par("planeSimulatorPath").stdstringValue();
+        roverSimulatorPath = par("roverSimulatorPath").stdstringValue();
+        shellPath = par("shellPath").stdstringValue();
+        MAVProxyCommand = par("MAVProxyCommand").stdstringValue();
     }
     if (stage == 1) {
         openSocket();
     }
+
+    if (stage == 2) {
+        startMAVProxy();
+    }
 }
 
 int MAVLinkManager::numInitStages() const {
-    return 2;
+    return 3;
+}
+
+std::string MAVLinkManager::setupParams(VehicleType type) {
+    std::string command;
+    std::string simulatorPath;
+    switch(type) {
+    case COPTER:
+        command += "curl https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/copter.parm -o ";
+        if(copterSimulatorPath.empty()) {
+            return "";
+        }
+        simulatorPath = copterSimulatorPath;
+        break;
+    case PLANE:
+        command += "curl https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/plane.parm -o ";
+        if(planeSimulatorPath.empty()) {
+            return "";
+        }
+        simulatorPath = planeSimulatorPath;
+        break;
+    case ROVER:
+        command += "curl https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/rover.parm -o ";
+        if(roverSimulatorPath.empty()) {
+            return "";
+        }
+        simulatorPath = roverSimulatorPath;
+        break;
+    default:
+        return "";
+    }
+
+
+    // Figuring out the directory parent to the simulator
+    size_t last_slash = simulatorPath.find_last_of("/\\");
+    size_t is_quoted = simulatorPath.find_last_of("\"") != std::string::npos;
+
+    std::string param_path = simulatorPath.substr(0, last_slash) + "/default.parm";
+    // Guaranteeing that if the simulator path was quoted we will keep it quoted
+    if(is_quoted) {
+        param_path += "\"";
+    }
+
+    command += param_path;
+    EV_INFO << "Setting up parameters with command: " << command << std::endl;;
+    std::system(command.c_str());
+    return param_path;
+}
+
+void MAVLinkManager::startMAVProxy() {
+    std::string command = MAVProxyCommand + " --out 127.0.0.1:" + std::to_string(connectionPort);
+
+    for (const auto &pair : registeredVehicles) {
+        command += " --master tcp:127.0.0.1:" + std::to_string(basePort + std::get<0>(pair.first) * 10);
+    }
+
+    EV_INFO << "Starting MAVPROXY with command: " << command << std::endl;
+
+    MAVProxyProcess = new TinyProcessLib::Process(shellPath, ".", [] (const char *str, size_t n) {
+        std::cout << str << std::endl;
+    }, nullptr, true);
+
+    MAVProxyProcess->write(command + "\n");
 }
 
 void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
-    std::ostringstream command;
-#ifdef _WIN32
-    command << "set PATH=%PATH%;" << MAVProxyPath << " & ";
-#else
-    command << "export PATH=$PATH:" << MAVProxyPath << " & ";
-#endif
+    std::string command;
 
-    if(!shellCommand.empty()) {
-        command << shellCommand << " \"";
-    }
-
-    std::string simulatorForVehicleType;
     switch(vehicleType) {
     case COPTER:
-        simulatorForVehicleType = "ArduCopter";
+        // Doesn's start the simulator if a PATH is not specified
+        if(copterSimulatorPath.empty()) {
+            EV_WARN << "No path specified for copter simulator so it will not start." << std::endl;
+            return;
+        }
+
+        command += copterSimulatorPath;
+        command += " -M quad --defaults " + setupParams(vehicleType);
         break;
     case PLANE:
-        simulatorForVehicleType = "ArduPlane";
+        // Doesn's start the simulator if a PATH is not specified
+        if(planeSimulatorPath.empty()) {
+            EV_WARN << "No path specified for plane simulator so it will not start." << std::endl;
+            return;
+        }
+        command += planeSimulatorPath;
+        command += " -M plane --defaults " + setupParams(vehicleType);
         break;
     case ROVER:
-        simulatorForVehicleType = "Rover";
+        // Doesn's start the simulator if a PATH is not specified
+        if(roverSimulatorPath.empty()) {
+            EV_WARN << "No path specified for rover simulator so it will not start." << std::endl;
+            return;
+        }
+        command += roverSimulatorPath;
+        command += " -M rover --defaults " + setupParams(vehicleType);
     }
 
-    command << simulatorPath << " -N -v " << simulatorForVehicleType <<" -I " << +systemId << " --sysid " << +systemId << " --out 127.0.0.1:" << connectionPort << " & ";;
-    if(!shellCommand.empty()) {
-        command << "\"";
-    }
-    EV_DETAIL << "Starting simulator with: " << command.str() << std::endl;
-    std::system(command.str().c_str());
+    command += " --base-port ";
+    command += std::to_string(basePort + (systemId * 10));
+    command += " --sysid ";
+    command += std::to_string(+systemId);
+
+    EV_INFO << "Starting simulator with command: " << command << std::endl;
+
+    TinyProcessLib::Process *process = new TinyProcessLib::Process(command, ".");
+    simulatorProcesses.push_back(process);
 }
 
 void MAVLinkManager::registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId) {
     EV_INFO << "Registering vehicle with sysid: " << +systemId << " and componentid: " << +componentId << std::endl;
     registeredVehicles.insert({VehicleEntry { systemId, componentId }, vehicle});
-    if(!simulatorPath.empty()) {
-        EV_INFO << "Starting simulator" << std::endl;
-        startSimulator(vehicle->vehicleType, systemId);
-    } else {
-        EV_WARN << "No simulatorPath was specified so no simulator was started" << std::endl;
-    }
+    startSimulator(vehicle->vehicleType, systemId);
 }
 
 bool MAVLinkManager::sendMessage(const mavlink_message_t& message, uint8_t destinationId) {
@@ -87,8 +166,16 @@ bool MAVLinkManager::sendMessage(const mavlink_message_t& message, uint8_t desti
     int length = mavlink_msg_to_send_buffer((uint8_t*) buf, &message);
     static const int c = sizeof(sockaddr_in);
 
-    if(addressMap.find(destinationId) != addressMap.end()) {
-        if(::sendto(fd, buf, length, 0, (sockaddr*) &addressMap[destinationId],c) == SOCKET_ERROR) {
+    int fd = -1;
+    for(auto& pair : sockets) {
+        if(pair.first.first == destinationId) {
+            fd = pair.second;
+            break;
+        }
+    }
+
+    if(fd != -1) {
+        if(::send(fd, buf, length, 0) == SOCKET_ERROR) {
             EV_ERROR << "Error sending message: " << WSAGetLastError() << std::endl;
             return false;
         }
@@ -98,7 +185,7 @@ bool MAVLinkManager::sendMessage(const mavlink_message_t& message, uint8_t desti
 }
 
 
-void MAVLinkManager::openSocket()
+void MAVLinkManager::openSocket(VehicleEntry vehicle, int port)
 {
     WSADATA wsa;
     struct sockaddr_in server;
@@ -113,23 +200,26 @@ void MAVLinkManager::openSocket()
     EV_INFO << "Initialised" << std::endl;
 
     //Create a socket
-    if((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP )) == INVALID_SOCKET)
+    int fd;
+    if((fd = socket(AF_INET , SOCK_STREAM , 0)) == INVALID_SOCKET)
     {
         EV_ERROR << "Could not create socket : " << WSAGetLastError() << std::endl;
         return;
     }
 
+    sockets.push_back({vehicle, fd});
+
     EV_INFO << "Socket created" << std::endl;
 
     //Prepare the sockaddr_in structure
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons( connectionPort );
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_port = htons( port );
 
     //Bind
-    if( bind(fd ,(struct sockaddr *)&server , sizeof(server)) == SOCKET_ERROR)
+    if( connect(fd ,(struct sockaddr *)&server , sizeof(server)) == SOCKET_ERROR)
     {
-        EV_ERROR << "Bind failed with error code : " << WSAGetLastError() << std::endl;
+        EV_ERROR << "Connect failed with error code : " << WSAGetLastError() << std::endl;
         return;
     }
     EV_INFO << "Socket bound" << std::endl;
@@ -148,13 +238,24 @@ void MAVLinkManager::openSocket()
 
 bool MAVLinkManager::notify(int incoming) {
     EV_DETAIL << "Notified" << std::endl;
-    if(incoming == fd) {
+
+    VehicleEntry vehicle;
+    bool found = false;
+    for (auto& pair : sockets) {
+        if(pair.second == incoming) {
+            vehicle = pair.first;
+            found = true;
+            break;
+        }
+    }
+
+    if(found) {
         int length;
         struct sockaddr_in client;
         static int c = sizeof(struct sockaddr_in);
 
         do {
-            if((length = recvfrom(fd, buf, 256, 0, (struct sockaddr *)&client, &c)) == SOCKET_ERROR) {
+            if((length = recv(incoming, buf, 256, 0)) == SOCKET_ERROR) {
                 int error = WSAGetLastError();
                 EV_DETAIL << "Received WSAEWOULDBLOCK, the socket is empty." << std::endl;
                 // Blocking errors are normal when no messages are present in a non-blocking socket
@@ -171,15 +272,7 @@ bool MAVLinkManager::notify(int incoming) {
             {
                 if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status))
                 {
-                    addressMap[msg.sysid] = client;
-
-                    MAVLinkManager::IMAVLinkVehicle* vehicle = nullptr;
-                    try {
-                        vehicle = registeredVehicles.at(VehicleEntry {msg.sysid, msg.compid});
-                    } catch(std::out_of_range error) {
-                        EV_DETAIL << "Received message from unregistered vehicle ID: " << msg.sysid << " COMPID: " << msg.compid << std::endl;
-                        break;
-                    }
+                    MAVLinkManager::IMAVLinkVehicle* vehicle = registeredVehicles.at(vehicle);;
                     vehicle->receiveTelemetry(msg);
                 }
             }
@@ -190,10 +283,22 @@ bool MAVLinkManager::notify(int incoming) {
 }
 
 
-MAVLinkManager::~MAVLinkManager() {
+void MAVLinkManager::finish() {
     WSACleanup();
-    rtScheduler->removeCallback(fd, this);
-    closesocket(fd);
+    for (int fd : sockets) {
+        rtScheduler->removeCallback(fd, this);
+        closesocket(fd);
+    }
+
+    for(TinyProcessLib::Process *subprocess : simulatorProcesses) {
+        if(subprocess != nullptr) {
+            subprocess->kill();
+        }
+    }
+
+    if (MAVProxyProcess != nullptr) {
+        MAVProxyProcess->kill();
+    }
 }
 
 

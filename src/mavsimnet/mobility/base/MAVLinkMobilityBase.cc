@@ -34,12 +34,11 @@ void MAVLinkMobilityBase::initialize(int stage)
         manager = getModuleFromPar<MAVLinkManager>(par("managerModule"), this, true);
         coordinateSystem = getModuleFromPar<IGeographicCoordinateSystem>(par("coordinateSystemModule"), this, true);
         manager->registerVehicle(this, targetSystem, targetComponent);
-        performInitialSetup();
     }
-
     if (stage == 1) {
         systemId = manager->getSystemId();
         componentId = manager->getComponentId();
+        performInitialSetup();
     }
 }
 void MAVLinkMobilityBase::handleMessage(cMessage *msg) {
@@ -83,15 +82,16 @@ void MAVLinkMobilityBase::performInitialSetup() {
     cmd.target_system = targetSystem;
 
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &message, &cmd);
-    queueMessage(message, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem), 15, 5);
+    mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
+    std::cout << "Message: " << +message.sysid << std::endl;
+    queueMessage(message, TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem), 15, 5);
 
     cmd = {};
     cmd.command = MAV_CMD_DO_SET_HOME;
     cmd.confirmation = 0;
     cmd.param1 = 1; // Set current location as home
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &message, &cmd);
-    queueMessage(message, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_HOME, targetSystem), 15, 5);
+    mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
+    queueMessage(message, TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_DO_SET_HOME, targetSystem), 15, 5);
 }
 
 void MAVLinkMobilityBase::queueMessage(mavlink_message_t message, Condition condition, simtime_t timeout, int retries) {

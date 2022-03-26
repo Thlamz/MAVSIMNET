@@ -29,6 +29,8 @@ void MAVLinkFileMobility::initialize(int stage)
     MAVLinkMobilityBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         waypointFile = par("waypointFile").stdstringValue();
+    }
+    if (stage == 1) {
         readMissionFromFile();
         startMission();
     }
