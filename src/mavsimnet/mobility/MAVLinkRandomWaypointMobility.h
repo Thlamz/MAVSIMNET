@@ -38,6 +38,7 @@ protected:
 protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
+    virtual void finish() override;
     /**
      * Function used to set the next waypoint to move to.
      * It generates points randonly distributed in the constrain space of the mobility module.
@@ -49,8 +50,6 @@ protected:
     virtual void startMovement();
 
     virtual void move() override;
-
-    ~MAVLinkRandomWaypointMobility();
 };
 
 } //namespace

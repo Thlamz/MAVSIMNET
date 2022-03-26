@@ -32,7 +32,6 @@ void MAVLinkRandomWaypointMobility::initialize(int stage)
         waitTime = par("waitTime");
         waypointRadius = par("waypointRadius");
     }
-
     if (stage == 1) {
         startMovement();
         setTargetPosition();
@@ -73,7 +72,7 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     mavlink_message_t msg;
     
     // Commanding the vehicle to takeoff
-    queueInstructions(VehicleRoutines::armTakeoff(vehicleType, 50, targetSystem, targetComponent, 30, 3));
+    queueInstructions(VehicleRoutines::armTakeoff(systemId, componentId, vehicleType, 50, targetSystem, targetComponent, 30, 3));
 
     // Setting mode to guided, to prepare for random waypoint instructions
     queueInstructions(VehicleRoutines::setMode(vehicleType, VehicleRoutines::GUIDED, targetSystem, targetComponent));
@@ -106,7 +105,8 @@ void MAVLinkRandomWaypointMobility::startMovement() {
 
 }
 
-MAVLinkRandomWaypointMobility::~MAVLinkRandomWaypointMobility() {
+void MAVLinkRandomWaypointMobility::finish() {
+    MAVLinkMobilityBase::finish();
     cancelAndDelete(waypointChangeMessage);
 }
 

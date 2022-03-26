@@ -39,7 +39,6 @@ public:
         VehicleType vehicleType;
     };
 
-    virtual void startMAVProxy();
     virtual void startSimulator(VehicleType vehicleType, uint8_t systemId);
     virtual void registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId);
     virtual bool sendMessage(const mavlink_message_t& message, uint8_t destinationId);
@@ -57,18 +56,15 @@ protected:
 
 protected:
     uint8_t systemId, componentId;
-    int connectionPort, basePort;
+    int basePort;
     std::vector<std::pair<VehicleEntry, int>> sockets;
     char buf[256];
     RealTimeScheduler *rtScheduler;
     std::map<VehicleEntry, IMAVLinkVehicle*> registeredVehicles;
     std::vector<TinyProcessLib::Process*> simulatorProcesses;
-    TinyProcessLib::Process* MAVProxyProcess;
     std::string copterSimulatorPath;
     std::string planeSimulatorPath;
     std::string roverSimulatorPath;
-    std::string shellPath;
-    std::string MAVProxyCommand;
 
 private:
 

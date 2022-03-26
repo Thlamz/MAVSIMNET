@@ -15,6 +15,7 @@
 
 #include "MAVLinkManager.h"
 #include <winsock2.h>
+#include <fstream>
 
 namespace mavsimnet {
 
@@ -26,21 +27,11 @@ void MAVLinkManager::initialize(int stage) {
         componentId = par("componentId");
 
         rtScheduler = check_and_cast<inet::RealTimeScheduler *>(getSimulation()->getScheduler());
-        connectionPort = par("connectionPort");
         basePort = par("basePort");
 
         copterSimulatorPath = par("copterSimulatorPath").stdstringValue();
         planeSimulatorPath = par("planeSimulatorPath").stdstringValue();
         roverSimulatorPath = par("roverSimulatorPath").stdstringValue();
-        shellPath = par("shellPath").stdstringValue();
-        MAVProxyCommand = par("MAVProxyCommand").stdstringValue();
-    }
-    if (stage == 1) {
-        openSocket();
-    }
-
-    if (stage == 2) {
-        startMAVProxy();
     }
 }
 
@@ -88,26 +79,16 @@ std::string MAVLinkManager::setupParams(VehicleType type) {
         param_path += "\"";
     }
 
-    command += param_path;
-    EV_INFO << "Setting up parameters with command: " << command << std::endl;;
-    std::system(command.c_str());
-    return param_path;
-}
-
-void MAVLinkManager::startMAVProxy() {
-    std::string command = MAVProxyCommand + " --out 127.0.0.1:" + std::to_string(connectionPort);
-
-    for (const auto &pair : registeredVehicles) {
-        command += " --master tcp:127.0.0.1:" + std::to_string(basePort + std::get<0>(pair.first) * 10);
+    // Check if params are already loaded
+    std::ifstream infile(param_path);
+    if(!infile.good()) {
+        command += param_path;
+        EV_INFO << "Setting up parameters with command: " << command << std::endl;;
+        std::system(command.c_str());
     }
+    infile.close();
 
-    EV_INFO << "Starting MAVPROXY with command: " << command << std::endl;
-
-    MAVProxyProcess = new TinyProcessLib::Process(shellPath, ".", [] (const char *str, size_t n) {
-        std::cout << str << std::endl;
-    }, nullptr, true);
-
-    MAVProxyProcess->write(command + "\n");
+    return param_path;
 }
 
 void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
@@ -144,7 +125,7 @@ void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
     }
 
     command += " --base-port ";
-    command += std::to_string(basePort + (systemId * 10));
+    command += std::to_string(basePort + (systemId * 20));
     command += " --sysid ";
     command += std::to_string(+systemId);
 
@@ -156,8 +137,10 @@ void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
 
 void MAVLinkManager::registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId) {
     EV_INFO << "Registering vehicle with sysid: " << +systemId << " and componentid: " << +componentId << std::endl;
-    registeredVehicles.insert({VehicleEntry { systemId, componentId }, vehicle});
+    VehicleEntry entry  { systemId, componentId };
+    registeredVehicles.insert({entry, vehicle});
     startSimulator(vehicle->vehicleType, systemId);
+    openSocket(entry, basePort + (systemId * 20));
 }
 
 bool MAVLinkManager::sendMessage(const mavlink_message_t& message, uint8_t destinationId) {
@@ -239,11 +222,11 @@ void MAVLinkManager::openSocket(VehicleEntry vehicle, int port)
 bool MAVLinkManager::notify(int incoming) {
     EV_DETAIL << "Notified" << std::endl;
 
-    VehicleEntry vehicle;
+    VehicleEntry vehicleEntry;
     bool found = false;
     for (auto& pair : sockets) {
         if(pair.second == incoming) {
-            vehicle = pair.first;
+            vehicleEntry = pair.first;
             found = true;
             break;
         }
@@ -272,7 +255,7 @@ bool MAVLinkManager::notify(int incoming) {
             {
                 if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status))
                 {
-                    MAVLinkManager::IMAVLinkVehicle* vehicle = registeredVehicles.at(vehicle);;
+                    MAVLinkManager::IMAVLinkVehicle* vehicle = registeredVehicles[vehicleEntry];
                     vehicle->receiveTelemetry(msg);
                 }
             }
@@ -285,7 +268,8 @@ bool MAVLinkManager::notify(int incoming) {
 
 void MAVLinkManager::finish() {
     WSACleanup();
-    for (int fd : sockets) {
+    for (auto &pair : sockets) {
+        int fd = pair.second;
         rtScheduler->removeCallback(fd, this);
         closesocket(fd);
     }
@@ -294,10 +278,6 @@ void MAVLinkManager::finish() {
         if(subprocess != nullptr) {
             subprocess->kill();
         }
-    }
-
-    if (MAVProxyProcess != nullptr) {
-        MAVProxyProcess->kill();
     }
 }
 

@@ -42,6 +42,7 @@ void MAVLinkMobilityBase::initialize(int stage)
     }
 }
 void MAVLinkMobilityBase::handleMessage(cMessage *msg) {
+    Enter_Method_Silent();
     if(msg->isSelfMessage()) {
         if(strcmp(msg->getName(), "MAVLinkMobilityBaseMessage") == 0) {
             switch(msg->getKind()) {
@@ -71,31 +72,74 @@ void MAVLinkMobilityBase::handleMessage(cMessage *msg) {
 
 
 void MAVLinkMobilityBase::performInitialSetup() {
-    EV_INFO << "Setting STREAM RATE FOR POSITION" << std::endl;
     mavlink_command_long_t cmd;
     cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
     cmd.confirmation = 0;
     cmd.param1 = MAVLINK_MSG_ID_GLOBAL_POSITION_INT;
-    cmd.param2 = 100000; // 10 Hz
+    cmd.param2 = updateInterval.inUnit(SimTimeUnit::SIMTIME_US);
     cmd.param7 = 0;
     cmd.target_component = targetComponent;
     cmd.target_system = targetSystem;
 
     mavlink_message_t message;
     mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
-    std::cout << "Message: " << +message.sysid << std::endl;
-    queueMessage(message, TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem), 15, 5);
+    queueMessage(message,
+            TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem),
+            15, 5, "Setting stream rate for position messages");
+
+    cmd = {};
+    cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+    cmd.confirmation = 0;
+    cmd.param1 = MAVLINK_MSG_ID_ATTITUDE;
+    cmd.param2 =  updateInterval.inUnit(SimTimeUnit::SIMTIME_US);
+    cmd.param7 = 0;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
+    mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
+    queueMessage(message,
+            TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem),
+            15, 5, "Setting stream rate for attitude messages");
+
+    cmd = {};
+    cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+    cmd.confirmation = 0;
+    cmd.param1 = MAVLINK_MSG_ID_EKF_STATUS_REPORT;
+    cmd.param2 = 2000000; // 0.5 Hz
+    cmd.param7 = 0;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
+    mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
+    queueMessage(message,
+            TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem),
+            15, 5, "Setting stream rate for ekf reports");
+
+    cmd = {};
+    cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+    cmd.confirmation = 0;
+    cmd.param1 = MAVLINK_MSG_ID_HEARTBEAT;
+    cmd.param2 = 2000000; // 0.5 Hz
+    cmd.param7 = 0;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
+    mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
+    queueMessage(message,
+            TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem),
+            15, 5, "Setting stream rate for heart beats");
 
     cmd = {};
     cmd.command = MAV_CMD_DO_SET_HOME;
     cmd.confirmation = 0;
     cmd.param1 = 1; // Set current location as home
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
     mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
-    queueMessage(message, TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_DO_SET_HOME, targetSystem), 15, 5);
+    queueMessage(message,
+            TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_DO_SET_HOME, targetSystem),
+            15, 5, "Setting home");
 }
 
-void MAVLinkMobilityBase::queueMessage(mavlink_message_t message, Condition condition, simtime_t timeout, int retries) {
-    instructionQueue.push(std::make_shared<Instruction>(message, condition, timeout, retries));
+void MAVLinkMobilityBase::queueMessage(mavlink_message_t message, Condition condition, simtime_t timeout, int retries, std::string label) {
+    instructionQueue.push(std::make_shared<Instruction>(message, condition, timeout, retries, label));
 }
 
 void MAVLinkMobilityBase::queueInstruction(std::shared_ptr<Instruction> instruction) {
@@ -116,7 +160,13 @@ void MAVLinkMobilityBase::nextMessage() {
         activeInstructionTries = 0;
         activeInstruction = instructionQueue.front();
         instructionQueue.pop();
+
+        if(!getActiveLabel().empty()) {
+            EV_INFO << "Setting \"" << getActiveLabel() << "\" instruction to active." << std::endl;
+        }
+
         sendActiveMessage();
+
 
         // Setting up timeout
         if(getActiveTimeout() > 0) {
@@ -141,6 +191,12 @@ void MAVLinkMobilityBase::clearQueue() {
 
 bool MAVLinkMobilityBase::sendActiveMessage() {
     if(activeInstruction != nullptr) {
+        if(getActiveLabel().empty()) {
+            EV_INFO << "(" << +targetSystem << ") Sending message: " << getActiveMessage().msgid << std::endl;
+        }
+        else {
+            EV_INFO << "(" << +targetSystem << ") Sending message: " << getActiveLabel() << " - " << getActiveMessage().msgid << std::endl;
+        }
         bool success = sendMessage(getActiveMessage(), getActiveTimeout() == 0,activeInstructionTries, getActiveRetries());
         if(!success && getActiveTimeout() == 0) {
             nextMessage();
@@ -152,7 +208,6 @@ bool MAVLinkMobilityBase::sendActiveMessage() {
 }
 
 bool MAVLinkMobilityBase::sendMessage(const mavlink_message_t& message, bool shouldRetry, int &currentTries, int maxRetries) {
-    EV_INFO << "Sending message: " << message.msgid << std::endl;
     do {
         if(currentTries >= 1) {
             EV_WARN << "RETRY " << currentTries << std::endl;
@@ -202,7 +257,7 @@ void MAVLinkMobilityBase::updatePosition(const mavlink_message_t& msg) {
         mavlink_attitude_t attitude;
         mavlink_msg_attitude_decode(&msg, &attitude);
 
-        currentOrientation =  Quaternion(EulerAngles(rad(M_PI - attitude.yaw), rad(-attitude.roll), rad(-attitude.pitch)));
+        currentOrientation = Quaternion(EulerAngles(rad(M_PI - attitude.yaw), rad(-attitude.roll), rad(-attitude.pitch)));
     }
 }
 
@@ -213,15 +268,18 @@ void MAVLinkMobilityBase::receiveTelemetry(mavlink_message_t message) {
     EV_DETAIL << "Received MAVLINK: " << message.msgid << std::endl;
     updatePosition(message);
 
-    if(getActiveCondition() && getActiveCondition()(message) && activeInstruction != nullptr) {
+    if(getActiveCondition() && getActiveCondition()(message) && activeInstruction != nullptr && !getActiveCompleted()) {
         activeInstruction->completed = true;
+        EV_INFO << "Message " << getActiveMessage().msgid << " done." << std::endl;
     }
 
     nextMessageIfReady();
 }
 
-MAVLinkMobilityBase::~MAVLinkMobilityBase() {
+void MAVLinkMobilityBase::finish() {
+    MovingMobilityBase::finish();
     cancelAndDelete(timeoutMessage);
+    clearQueue();
 }
 
 }

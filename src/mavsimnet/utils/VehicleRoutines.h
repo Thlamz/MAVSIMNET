@@ -17,7 +17,7 @@
 namespace mavsimnet {
 namespace VehicleRoutines {
 
-std::vector<std::shared_ptr<Instruction>> armTakeoff(VehicleType type, float altitude, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout=60, int retries=3);
+std::vector<std::shared_ptr<Instruction>> armTakeoff(uint8_t senderSystem, uint8_t senderComponent, VehicleType type, float altitude, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout=60, int retries=3);
 
 enum Mode {
     GUIDED,

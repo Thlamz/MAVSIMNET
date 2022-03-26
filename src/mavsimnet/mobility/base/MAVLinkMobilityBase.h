@@ -37,13 +37,14 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
   protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
+    virtual void finish() override;
     virtual void move() override;
     virtual void orient() override;
 
     // Performs initial setup on the vehicle. This includes setting update rate and setting home to current position
     virtual void performInitialSetup();
     virtual void updatePosition(const mavlink_message_t& message);
-    virtual void queueMessage(mavlink_message_t message, Condition condition = {}, simtime_t timeout = -1, int retries = 0);
+    virtual void queueMessage(mavlink_message_t message, Condition condition = {}, simtime_t timeout = -1, int retries = 0, std::string label = "");
     virtual void queueInstruction(std::shared_ptr<Instruction> instruction);
     virtual void queueInstructions(std::vector<std::shared_ptr<Instruction>> instructions);
     virtual int queueSize() { return instructionQueue.size(); }
@@ -61,9 +62,8 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     simtime_t getActiveTimeout() { return (activeInstruction != nullptr) ? activeInstruction->timeout : 0; };
     int getActiveRetries() { return (activeInstruction != nullptr) ? activeInstruction->retries : 0; };
     bool getActiveCompleted() { return (activeInstruction != nullptr) ? activeInstruction->completed : false; };
+    std::string getActiveLabel() { return (activeInstruction != nullptr) ? activeInstruction->label : ""; };
     Coord getCurrentCoord() { return (activeInstruction != nullptr) ? currentPosition : Coord{}; }
-
-    ~MAVLinkMobilityBase();
 
 
     enum CommunicationSelfMessages {

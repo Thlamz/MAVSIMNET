@@ -17,11 +17,12 @@ namespace mavsimnet {
 typedef std::function<bool(mavlink_message_t)> Condition;
 
 struct Instruction {
-    Instruction(mavlink_message_t message, Condition condition, omnetpp::simtime_t timeout, int retries, bool completed=false) : message(message), condition(condition), timeout(timeout), retries(retries), completed(completed) {};
+    Instruction(mavlink_message_t message, Condition condition, omnetpp::simtime_t timeout, int retries, std::string label = "",bool completed=false) : message(message), condition(condition), timeout(timeout), retries(retries), label(label), completed(completed) {};
     mavlink_message_t message;
     Condition condition;
     omnetpp::simtime_t timeout;
     int retries;
+    std::string label;
     bool completed = false;
 };
 

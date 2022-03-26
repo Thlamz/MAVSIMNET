@@ -38,19 +38,13 @@ simple MAVLinkManager
     	int systemId = default(235);
     	// Component ID of this GCS
         int componentId = default(235);
-        // Port that MAVProxy should use
-        int connectionPort = default(5505);
         // Base port for the SITL simulators
-        int basePort = default(5605);
-        // Path to your prefered shell
-        string shellPath;
+        int basePort = default(5505);
         // Path to the ArduCopter binary
 		string copterSimulatorPath = default("");
 		// Path to the ArduPlane binary
 		string planeSimulatorPath = default("");
 		// Path to the Rover binary
 		string roverSimulatorPath = default("");
-		// Command to open MAVProxy. On windows it should be "start MAVPROXY_PATH.exe" where MAVPROXY_PATH.exe is the path to the mavproxy.exe file in your MAVProxy installation
-        string MAVProxyCommand;
 		
 }

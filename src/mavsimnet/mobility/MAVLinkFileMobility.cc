@@ -143,8 +143,8 @@ void MAVLinkFileMobility::startMission() {
     cmd = {};
     cmd.command = MAV_CMD_MISSION_START;
     cmd.confirmation = 0;
-    cmd.target_component = 1;
-    cmd.target_system = 1;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
     mavlink_msg_command_long_encode(targetSystem, targetComponent, &message, &cmd);
     queueMessage(message, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_MISSION_START, targetSystem), 15, 3);
 }

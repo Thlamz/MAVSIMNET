@@ -36,7 +36,6 @@ std::function<bool(mavlink_message_t)> getCheckCmdAck(uint8_t systemId, uint8_t 
             mavlink_command_ack_t ack;
 
             mavlink_msg_command_ack_decode(&message, &ack);
-            std::cout << "ACK: " << +ack.command << " " << +ack.result << " " << +ack.target_system << " " << +systemId << " " << +ack.target_component << " " << +componentId << " " << std::endl;
             return (ack.command == command && ack.result == MAV_RESULT_ACCEPTED && (ack.target_system == systemId || ack.target_system == 0));
         }
         return false;
@@ -63,7 +62,6 @@ std::function<bool(mavlink_message_t)> getCheckPreArm(uint8_t senderSystemId) {
         if(message.msgid == MAVLINK_MSG_ID_EKF_STATUS_REPORT && verifySender(message, senderSystemId)) {
             mavlink_ekf_status_report_t report;
             mavlink_msg_ekf_status_report_decode(&message, &report);
-
             // Flags don't include error bits and include all required values
             return !(report.flags & error_bits) && ((report.flags & required_value) == required_value);
         }
