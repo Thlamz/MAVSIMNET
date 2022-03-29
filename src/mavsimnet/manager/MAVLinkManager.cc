@@ -83,8 +83,10 @@ std::string MAVLinkManager::setupParams(VehicleType type) {
     std::ifstream infile(param_path);
     if(!infile.good()) {
         command += param_path;
-        EV_INFO << "Setting up parameters with command: " << command << std::endl;;
-        std::system(command.c_str());
+        EV_INFO << "Setting up parameters on path " << param_path << " command: " << command << std::endl;
+        // std::system(command.c_str());
+    } else {
+        EV_INFO << "Parameters already set up" << std::endl;
     }
     infile.close();
 
@@ -103,7 +105,7 @@ void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
         }
 
         command += copterSimulatorPath;
-        command += " -M quad --defaults " + setupParams(vehicleType);
+        command += " -M quad -w --defaults " + setupParams(vehicleType);
         break;
     case PLANE:
         // Doesn's start the simulator if a PATH is not specified
@@ -111,8 +113,9 @@ void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
             EV_WARN << "No path specified for plane simulator so it will not start." << std::endl;
             return;
         }
+
         command += planeSimulatorPath;
-        command += " -M plane --defaults " + setupParams(vehicleType);
+        command += " -M plane -w --defaults " + setupParams(vehicleType);
         break;
     case ROVER:
         // Doesn's start the simulator if a PATH is not specified
@@ -121,11 +124,11 @@ void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
             return;
         }
         command += roverSimulatorPath;
-        command += " -M rover --defaults " + setupParams(vehicleType);
+        command += " -M rover -w --defaults " + setupParams(vehicleType);
     }
 
     command += " --base-port ";
-    command += std::to_string(basePort + (systemId * 20));
+    command += std::to_string(basePort + (systemId * 10));
     command += " --sysid ";
     command += std::to_string(+systemId);
 
@@ -135,12 +138,14 @@ void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
     simulatorProcesses.push_back(process);
 }
 
+// TODO: Support for real vehicles, specifying address and port
 void MAVLinkManager::registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId) {
     EV_INFO << "Registering vehicle with sysid: " << +systemId << " and componentid: " << +componentId << std::endl;
     VehicleEntry entry  { systemId, componentId };
     registeredVehicles.insert({entry, vehicle});
+
     startSimulator(vehicle->vehicleType, systemId);
-    openSocket(entry, basePort + (systemId * 20));
+    openSocket(entry, basePort + (systemId * 10));
 }
 
 bool MAVLinkManager::sendMessage(const mavlink_message_t& message, uint8_t destinationId) {
@@ -183,6 +188,7 @@ void MAVLinkManager::openSocket(VehicleEntry vehicle, int port)
     EV_INFO << "Initialised" << std::endl;
 
     //Create a socket
+    // TODO: This should be a UDP socket if we are connecting to a real vehicle
     int fd;
     if((fd = socket(AF_INET , SOCK_STREAM , 0)) == INVALID_SOCKET)
     {
@@ -220,6 +226,7 @@ void MAVLinkManager::openSocket(VehicleEntry vehicle, int port)
 
 
 bool MAVLinkManager::notify(int incoming) {
+    Enter_Method_Silent();
     EV_DETAIL << "Notified" << std::endl;
 
     VehicleEntry vehicleEntry;
@@ -234,13 +241,11 @@ bool MAVLinkManager::notify(int incoming) {
 
     if(found) {
         int length;
-        struct sockaddr_in client;
-        static int c = sizeof(struct sockaddr_in);
 
         do {
             if((length = recv(incoming, buf, 256, 0)) == SOCKET_ERROR) {
                 int error = WSAGetLastError();
-                EV_DETAIL << "Received WSAEWOULDBLOCK, the socket is empty." << std::endl;
+                EV_DEBUG << "Received WSAEWOULDBLOCK, the socket is empty." << std::endl;
                 // Blocking errors are normal when no messages are present in a non-blocking socket
                 if(error == WSAEWOULDBLOCK) return true;
                 EV_ERROR << "Error receiving message, code: " << error << std::endl;

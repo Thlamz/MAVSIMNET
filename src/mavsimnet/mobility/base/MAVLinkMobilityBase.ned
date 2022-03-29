@@ -19,6 +19,7 @@ import inet.mobility.base.MovingMobilityBase;
 
 simple MAVLinkMobilityBase extends MovingMobilityBase
 {
+    // TODO: Add support for simulating real vehicles
     parameters:
         @class(MAVLinkMobilityBase);
         string managerModule = default("mavlinkManager");

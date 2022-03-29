@@ -124,7 +124,7 @@ void MAVLinkFileMobility::startMission() {
     mavlink_message_t message;
 
     // Sending MODE GUIDED command
-    queueInstructions(VehicleRoutines::setMode(vehicleType, VehicleRoutines::GUIDED, targetSystem, targetComponent));
+    queueInstructions(VehicleRoutines::setMode(systemId, componentId, vehicleType, VehicleRoutines::GUIDED, targetSystem, targetComponent));
 
     // Sending ARM THROTTLE command
     cmd = {};
@@ -137,7 +137,7 @@ void MAVLinkFileMobility::startMission() {
     queueMessage(message, TelemetryConditions::getCheckArm(targetSystem), 15, 3);
 
     // Sending MODE AUTO command
-    queueInstructions(VehicleRoutines::setMode(vehicleType, VehicleRoutines::AUTO, targetSystem, targetComponent));
+    queueInstructions(VehicleRoutines::setMode(systemId, componentId, vehicleType, VehicleRoutines::AUTO, targetSystem, targetComponent));
 
     // Starting mission
     cmd = {};

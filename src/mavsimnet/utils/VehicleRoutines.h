@@ -24,7 +24,7 @@ enum Mode {
     AUTO,
     TAKEOFF
 };
-std::vector<std::shared_ptr<Instruction>> setMode(VehicleType type, Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout=60, int retries=3);
+std::vector<std::shared_ptr<Instruction>> setMode(uint8_t senderSystem, uint8_t senderComponent, VehicleType type, Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout=60, int retries=3);
 
 /* GUIDED MODE COMMANDS */
 std::vector<std::shared_ptr<Instruction>> guidedGoto(VehicleType type, double latitude, double longitude, float altitude, double tolerance,

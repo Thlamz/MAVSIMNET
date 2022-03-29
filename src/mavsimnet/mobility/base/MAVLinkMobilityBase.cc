@@ -265,7 +265,7 @@ void MAVLinkMobilityBase::updatePosition(const mavlink_message_t& msg) {
 void MAVLinkMobilityBase::receiveTelemetry(mavlink_message_t message) {
     Enter_Method_Silent();
 
-    EV_DETAIL << "Received MAVLINK: " << message.msgid << std::endl;
+    EV_DETAIL << "(" << +targetSystem << ") Received MAVLINK: " << message.msgid << std::endl;
     updatePosition(message);
 
     if(getActiveCondition() && getActiveCondition()(message) && activeInstruction != nullptr && !getActiveCompleted()) {

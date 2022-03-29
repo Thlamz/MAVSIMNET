@@ -13,7 +13,7 @@
 namespace mavsimnet {
 namespace VehicleRoutines {
 
-std::vector<std::shared_ptr<Instruction>> armTakeoffCopter(float altitude, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout,
+std::vector<std::shared_ptr<Instruction>> armTakeoffCopter(uint8_t senderSystem, uint8_t senderComponent, float altitude, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout,
         int retries)
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
@@ -28,7 +28,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffCopter(float altitude, uint8
     cmd.target_component = targetComponent;
     cmd.target_system = targetSystem;
 
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+    mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
     instructions.push_back(std::make_shared<Instruction>(msg, TelemetryConditions::getCheckPreArm(targetSystem), timeout, retries, "Setting mode to GUIDED"));
 
     cmd = {};
@@ -38,7 +38,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffCopter(float altitude, uint8
     cmd.target_component = targetComponent;
     cmd.target_system = targetSystem;
 
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+    mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
     instructions.push_back(std::make_shared<Instruction>(msg, TelemetryConditions::getCheckArm(targetSystem), timeout, retries, "Arming vehicle"));
 
     cmd = {};
@@ -48,7 +48,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffCopter(float altitude, uint8
     cmd.target_component = targetComponent;
     cmd.target_system = targetSystem;
 
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+    mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
     instructions.push_back(std::make_shared<Instruction>(msg, TelemetryConditions::getCheckAltitude(25, 3, targetSystem), timeout, retries, "Sending TAKEOFF command"));
 
     return instructions;
@@ -67,7 +67,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffPlane(uint8_t senderSystem, 
     instructions.push_back(
             std::make_shared<Instruction>(msg, TelemetryConditions::getCheckParamValue("TKOFF_ALT", altitude, targetSystem), timeout, retries, "Setting takeoff altitude"));
 
-    for (std::shared_ptr<Instruction> instruction : setMode(PLANE, TAKEOFF, targetSystem, targetComponent, timeout, retries)) {
+    for (std::shared_ptr<Instruction> instruction : setMode(senderSystem, senderComponent, PLANE, TAKEOFF, targetSystem, targetComponent, timeout, retries)) {
         instructions.push_back(instruction);
     }
 
@@ -83,7 +83,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffPlane(uint8_t senderSystem, 
     return instructions;
 }
 
-std::vector<std::shared_ptr<Instruction>> armTakeoffRover(uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries)
+std::vector<std::shared_ptr<Instruction>> armTakeoffRover(uint8_t senderSystem, uint8_t senderComponent, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout, int retries)
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
 
@@ -97,7 +97,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffRover(uint8_t targetSystem, 
     cmd.target_component = targetComponent;
     cmd.target_system = targetSystem;
 
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+    mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
     instructions.push_back(std::make_shared<Instruction>(msg, TelemetryConditions::getCheckPreArm(targetSystem), timeout, retries, "Setting mode to GUIDED"));
 
     cmd = {};
@@ -107,7 +107,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffRover(uint8_t targetSystem, 
     cmd.target_component = targetComponent;
     cmd.target_system = targetSystem;
 
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+    mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
     instructions.push_back(std::make_shared<Instruction>(msg, TelemetryConditions::getCheckArm(targetSystem), timeout, retries, "Arming vehicle"));
 
     return instructions;
@@ -119,16 +119,16 @@ std::vector<std::shared_ptr<Instruction>> armTakeoff(uint8_t senderSystem, uint8
 {
     switch (type) {
         case COPTER:
-            return armTakeoffCopter(altitude, targetSystem, targetComponent, timeout, retries);
+            return armTakeoffCopter(senderSystem, senderComponent, altitude, targetSystem, targetComponent, timeout, retries);
         case PLANE:
             return armTakeoffPlane(senderSystem, senderComponent, altitude, targetSystem, targetComponent, timeout, retries);
         case ROVER:
-            return armTakeoffRover(targetSystem, targetComponent, timeout, retries);
+            return armTakeoffRover(senderSystem, senderComponent, targetSystem, targetComponent, timeout, retries);
     }
     return {};
 }
 
-std::vector<std::shared_ptr<Instruction>> setModeCopter(Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout,
+std::vector<std::shared_ptr<Instruction>> setModeCopter(uint8_t senderSystem, uint8_t senderComponent, Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout,
         int retries)
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
@@ -143,7 +143,7 @@ std::vector<std::shared_ptr<Instruction>> setModeCopter(Mode mode, uint8_t targe
             cmd.target_component = targetComponent;
             cmd.target_system = targetSystem;
 
-            mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+            mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
                             TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Seting mode to GUIDED"));
@@ -155,7 +155,7 @@ std::vector<std::shared_ptr<Instruction>> setModeCopter(Mode mode, uint8_t targe
             cmd.param2 = COPTER_MODE_AUTO;
             cmd.target_component = targetComponent;
             cmd.target_system = targetSystem;
-            mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+            mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
                             TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to AUTO"));
@@ -166,7 +166,7 @@ std::vector<std::shared_ptr<Instruction>> setModeCopter(Mode mode, uint8_t targe
     return instructions;
 }
 
-std::vector<std::shared_ptr<Instruction>> setModePlane(Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout,
+std::vector<std::shared_ptr<Instruction>> setModePlane(uint8_t senderSystem, uint8_t senderComponent, Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout,
         int retries)
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
@@ -181,7 +181,7 @@ std::vector<std::shared_ptr<Instruction>> setModePlane(Mode mode, uint8_t target
             cmd.target_component = targetComponent;
             cmd.target_system = targetSystem;
 
-            mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+            mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
                             TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to GUIDED"));
@@ -193,7 +193,7 @@ std::vector<std::shared_ptr<Instruction>> setModePlane(Mode mode, uint8_t target
             cmd.param2 = PLANE_MODE_AUTO;
             cmd.target_component = targetComponent;
             cmd.target_system = targetSystem;
-            mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+            mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
                             TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to AUTO"));
@@ -205,7 +205,7 @@ std::vector<std::shared_ptr<Instruction>> setModePlane(Mode mode, uint8_t target
             cmd.param2 = PLANE_MODE_TAKEOFF;
             cmd.target_component = targetComponent;
             cmd.target_system = targetSystem;
-            mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+            mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
                             TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to TAKEOFF"));
@@ -214,7 +214,7 @@ std::vector<std::shared_ptr<Instruction>> setModePlane(Mode mode, uint8_t target
     return instructions;
 }
 
-std::vector<std::shared_ptr<Instruction>> setModeRover(Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout,
+std::vector<std::shared_ptr<Instruction>> setModeRover(uint8_t senderSystem, uint8_t senderComponent, Mode mode, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout,
         int retries)
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
@@ -229,7 +229,7 @@ std::vector<std::shared_ptr<Instruction>> setModeRover(Mode mode, uint8_t target
             cmd.target_component = targetComponent;
             cmd.target_system = targetSystem;
 
-            mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+            mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
                             TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to GUIDED"));
@@ -241,7 +241,7 @@ std::vector<std::shared_ptr<Instruction>> setModeRover(Mode mode, uint8_t target
             cmd.param2 = ROVER_MODE_AUTO;
             cmd.target_component = targetComponent;
             cmd.target_system = targetSystem;
-            mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
+            mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
                             TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to AUTO"));
@@ -251,16 +251,16 @@ std::vector<std::shared_ptr<Instruction>> setModeRover(Mode mode, uint8_t target
 }
 
 
-std::vector<std::shared_ptr<Instruction>> setMode(VehicleType type, Mode mode, uint8_t targetSystem, uint8_t targetComponent,
+std::vector<std::shared_ptr<Instruction>> setMode(uint8_t senderSystem, uint8_t senderComponent, VehicleType type, Mode mode, uint8_t targetSystem, uint8_t targetComponent,
         omnetpp::simtime_t timeout, int retries)
 {
     switch (type) {
         case COPTER:
-            return setModeCopter(mode, targetSystem, targetComponent, timeout, retries);
+            return setModeCopter(senderSystem, senderComponent, mode, targetSystem, targetComponent, timeout, retries);
         case PLANE:
-            return setModePlane(mode, targetSystem, targetComponent, timeout, retries);
+            return setModePlane(senderSystem, senderComponent, mode, targetSystem, targetComponent, timeout, retries);
         case ROVER:
-            return setModeRover(mode, targetSystem, targetComponent, timeout, retries);
+            return setModeRover(senderSystem, senderComponent, mode, targetSystem, targetComponent, timeout, retries);
     }
     return {};
 }
