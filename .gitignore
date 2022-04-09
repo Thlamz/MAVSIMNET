@@ -4,8 +4,10 @@
 *.exe
 *.dll
 **logs/*
+*.BIN
 *.bin
 *.tlog
 *.raw
 *.parm
 *.DAT
+/.computed/
