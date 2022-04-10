@@ -17,11 +17,18 @@ package mavsimnet.mobility;
 
 import mavsimnet.mobility.base.MAVLinkMobilityBase;
 
+// 
+// This module is analogous to INET's RandomWaypointMobility. The vehicle will follow random waypoints within the environment constraints
+// and wait there for a set amount before traveling to the next one. 
+//
 simple MAVLinkRandomWaypointMobility extends MAVLinkMobilityBase
 {
     parameters:
-        volatile double speed @unit(mps) = default(mps); // use uniform(minSpeed, maxSpeed) or another distribution
+        // Speed at which the vehicle should travel
+        volatile double speed @unit(mps) = default(mps);
+        // Time the vehicle will wait before traveling to the next waypoint
         volatile double waitTime @unit(s) = default(0s); // wait time between reaching a target and choosing a new one
-        double waypointRadius @unit(m) = default(30m); // radius of each waypoint. Vehicles within this radius of the waypoint will have reached them
+        // Radius of the waypoint. Vehicles within this radius will be considered to have reached the waypoint
+        double waypointRadius @unit(m) = default(30m);
         @class(MAVLinkRandomWaypointMobility);
 }

@@ -16,10 +16,14 @@
 package mavsimnet.mobility;
 
 import mavsimnet.mobility.base.MAVLinkMobilityBase;
-
+//
+// Mobility module that reads a MAVLink waypoint mission file, in the same format produced by
+// Mission Planner. This mission is relayed to the vehicle which follows it.
+//
 simple MAVLinkFileMobility extends MAVLinkMobilityBase
 {
     parameters:
     	@class(MAVLinkFileMobility);
+    	// Path to the waypoint mission file.
     	string waypointFile; 
 }

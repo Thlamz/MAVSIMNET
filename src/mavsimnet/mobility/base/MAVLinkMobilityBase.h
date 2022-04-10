@@ -32,6 +32,9 @@ namespace mavsimnet {
 class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IMAVLinkVehicle
 {
   public:
+    // Callback function called when a message is received from the simulated SITL instance. The default behaviour is to
+    // check if the message completes the condition of the active MAVLinkInstruction (if one exists) and to call the next
+    // MAVLinkInstruction if the current one is done.
     virtual void receiveTelemetry(mavlink_message_t message) override;
 
   protected:
@@ -43,14 +46,21 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
 
     // Performs initial setup on the vehicle. This includes setting update rate and setting home to current position
     virtual void performInitialSetup();
+    // Receives telemetry and updates the vehicle's position
     virtual void updatePosition(const mavlink_message_t& message);
+    // Queues instruction
     virtual void queueMessage(mavlink_message_t message, Condition condition = {}, simtime_t timeout = -1, int retries = 0, std::string label = "");
+    // Queues instruction
     virtual void queueInstruction(std::shared_ptr<Instruction> instruction);
+    // Queues list of instructions
     virtual void queueInstructions(std::vector<std::shared_ptr<Instruction>> instructions);
+
     virtual int queueSize() { return instructionQueue.size(); }
     virtual void clearQueue();
 
+    // Starts first instruction in queue
     virtual void nextMessage();
+    // Gets first instruction from queue if the active instruction is completed
     virtual void nextMessageIfReady();
     // Sends the current active instruction
     virtual bool sendActiveMessage();

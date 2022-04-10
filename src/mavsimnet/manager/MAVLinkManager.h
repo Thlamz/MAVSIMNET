@@ -39,8 +39,8 @@ public:
         VehicleType vehicleType;
     };
 
-    virtual void startSimulator(VehicleType vehicleType, uint8_t systemId);
-    virtual void registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId);
+    virtual void startSimulator(VehicleType vehicleType, uint8_t systemId, std::string paramPath);
+    virtual void registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId, std::string paramPath);
     virtual bool sendMessage(const mavlink_message_t& message, uint8_t destinationId);
     virtual bool notify(int fd) override;
 
@@ -52,7 +52,6 @@ protected:
     virtual void finish() override;
     virtual int numInitStages() const override;
     virtual void openSocket(VehicleEntry vehicle, int port);
-    virtual std::string setupParams(VehicleType type);
 
 protected:
     uint8_t systemId, componentId;

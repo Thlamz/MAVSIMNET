@@ -16,35 +16,37 @@
 package mavsimnet.manager;
 
 //
-// A module that manages connections to MAVLink vehicles. These vehicles are usually simulated vehicles in the SITL
-// simulator and are connected through MAVProxy using UDP to exchange messages.
+// A module that manages connections to MAVLink vehicles. These vehicles are simulated using SITL instances started from this module.
+// Using the SimulatorPath parameters this module runs the simulator instances during the OMNeT++ simulation initialization. It them
+// connects to this instances using TCP. 
 // 
 // This module is not responsible for generating or interpreting any MAVLink messages, it is merely a middle-man that facilitates
 // the message exchange between vehicles in the OMNeT++ simulation (represented by their mobility modules) and vehicles outside
-// this simulation.
+// this simulation. It is also responsible for running the SITL instances that simulate those vehicles.
 //
 // This module requires you to use inet::RealTimeScheduler as a scheduler for your simulation. This can be set up by placing this line in your
 // simulation's .ini:
 //
 // <pre>scheduler-class = "inet::RealTimeScheduler"</pre>
 //
-// This module's presence is <b>necessary</b> if you 
+// This module's presence is necessary if you want to use MAVLinkMobity mobility modules for your vehicles.
 //
 simple MAVLinkManager
 {
     parameters:
         @class(MAVLinkManager);
-        // System ID of this GCS
+        // System ID of this GCS.
     	int systemId = default(235);
-    	// Component ID of this GCS
+    	// Component ID of this GCS.
         int componentId = default(235);
-        // Base port for the SITL simulators
+        // Base port for the SITL simulators.
+        // The actual PORT the simulators will be run is basePort + (systemId * 10) where systemId is the system ID of the vehicle
+        // being simulated.
         int basePort = default(5505);
-        // Path to the ArduCopter binary
-		string copterSimulatorPath = default("");
-		// Path to the ArduPlane binary
-		string planeSimulatorPath = default("");
-		// Path to the Rover binary
-		string roverSimulatorPath = default("");
-		
+        // Path to the ArduCopter binary. Used to run simulator instances for this vehicle
+		string copterSimulatorPath;
+		// Path to the ArduPlane binary. Used to run simulator instances for this vehicle
+		string planeSimulatorPath;
+		// Path to the Rover binary. Used to run simulator instances for this vehicle
+		string roverSimulatorPath;		
 }

@@ -32,6 +32,7 @@ void MAVLinkManager::initialize(int stage) {
         copterSimulatorPath = par("copterSimulatorPath").stdstringValue();
         planeSimulatorPath = par("planeSimulatorPath").stdstringValue();
         roverSimulatorPath = par("roverSimulatorPath").stdstringValue();
+
     }
 }
 
@@ -39,92 +40,21 @@ int MAVLinkManager::numInitStages() const {
     return 3;
 }
 
-std::string MAVLinkManager::setupParams(VehicleType type) {
-    std::string command;
-    std::string simulatorPath;
-    switch(type) {
-    case COPTER:
-        command += "curl https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/copter.parm -o ";
-        if(copterSimulatorPath.empty()) {
-            return "";
-        }
-        simulatorPath = copterSimulatorPath;
-        break;
-    case PLANE:
-        command += "curl https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/plane.parm -o ";
-        if(planeSimulatorPath.empty()) {
-            return "";
-        }
-        simulatorPath = planeSimulatorPath;
-        break;
-    case ROVER:
-        command += "curl https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/rover.parm -o ";
-        if(roverSimulatorPath.empty()) {
-            return "";
-        }
-        simulatorPath = roverSimulatorPath;
-        break;
-    default:
-        return "";
-    }
-
-
-    // Figuring out the directory parent to the simulator
-    size_t last_slash = simulatorPath.find_last_of("/\\");
-    size_t is_quoted = simulatorPath.find_last_of("\"") != std::string::npos;
-
-    std::string param_path = simulatorPath.substr(0, last_slash) + "/default.parm";
-    // Guaranteeing that if the simulator path was quoted we will keep it quoted
-    if(is_quoted) {
-        param_path += "\"";
-    }
-
-    // Check if params are already loaded
-    std::ifstream infile(param_path);
-    if(!infile.good()) {
-        command += param_path;
-        EV_INFO << "Setting up parameters on path " << param_path << " command: " << command << std::endl;
-        // std::system(command.c_str());
-    } else {
-        EV_INFO << "Parameters already set up" << std::endl;
-    }
-    infile.close();
-
-    return param_path;
-}
-
-void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
+void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId, std::string paramPath) {
     std::string command;
 
     switch(vehicleType) {
     case COPTER:
-        // Doesn's start the simulator if a PATH is not specified
-        if(copterSimulatorPath.empty()) {
-            EV_WARN << "No path specified for copter simulator so it will not start." << std::endl;
-            return;
-        }
-
         command += copterSimulatorPath;
-        command += " -M quad -w --defaults " + setupParams(vehicleType);
+        command += " -M quad -w --defaults " + paramPath;
         break;
     case PLANE:
-        // Doesn's start the simulator if a PATH is not specified
-        if(planeSimulatorPath.empty()) {
-            EV_WARN << "No path specified for plane simulator so it will not start." << std::endl;
-            return;
-        }
-
         command += planeSimulatorPath;
-        command += " -M plane -w --defaults " + setupParams(vehicleType);
+        command += " -M plane -w --defaults " + paramPath;
         break;
     case ROVER:
-        // Doesn's start the simulator if a PATH is not specified
-        if(roverSimulatorPath.empty()) {
-            EV_WARN << "No path specified for rover simulator so it will not start." << std::endl;
-            return;
-        }
         command += roverSimulatorPath;
-        command += " -M rover -w --defaults " + setupParams(vehicleType);
+        command += " -M rover -w --defaults " + paramPath;
     }
 
     command += " --base-port ";
@@ -139,12 +69,12 @@ void MAVLinkManager::startSimulator(VehicleType vehicleType, uint8_t systemId) {
 }
 
 // TODO: Support for real vehicles, specifying address and port
-void MAVLinkManager::registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId) {
+void MAVLinkManager::registerVehicle(IMAVLinkVehicle *vehicle, uint8_t systemId, uint8_t componentId, std::string paramPath) {
     EV_INFO << "Registering vehicle with sysid: " << +systemId << " and componentid: " << +componentId << std::endl;
     VehicleEntry entry  { systemId, componentId };
     registeredVehicles.insert({entry, vehicle});
 
-    startSimulator(vehicle->vehicleType, systemId);
+    startSimulator(vehicle->vehicleType, systemId, paramPath);
     openSocket(entry, basePort + (systemId * 10));
 }
 
