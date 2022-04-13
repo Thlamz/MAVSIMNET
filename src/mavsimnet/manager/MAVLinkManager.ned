@@ -43,10 +43,21 @@ simple MAVLinkManager
         // The actual PORT the simulators will be run is basePort + (systemId * 10) where systemId is the system ID of the vehicle
         // being simulated.
         int basePort = default(5505);
+        
         // Path to the ArduCopter binary. Used to run simulator instances for this vehicle
+        // A stable version can be downloaded from: 
+        // https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/CopterStable/ (WINDOWS)
+        // https://firmware.ardupilot.org/Copter/stable/SITL_x86_64_linux_gnu/ (LINUX)
 		string copterSimulatorPath;
 		// Path to the ArduPlane binary. Used to run simulator instances for this vehicle
+		// A stable version can be downloaded from: 
+        // https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/PlaneStable/ (WINDOWS)
+        // https://firmware.ardupilot.org/Plane/stable/SITL_x86_64_linux_gnu/ (LINUX)
 		string planeSimulatorPath;
+		//// Path to the ArduRover binary. Used to run simulator instances for this vehicle
+		// A stable version can be downloaded from: 
+        // https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/RoverStable/ (WINDOWS)
+        // https://firmware.ardupilot.org/Rover/stable/SITL_x86_64_linux_gnu/ (LINUX)
 		// Path to the Rover binary. Used to run simulator instances for this vehicle
 		string roverSimulatorPath;		
 }
