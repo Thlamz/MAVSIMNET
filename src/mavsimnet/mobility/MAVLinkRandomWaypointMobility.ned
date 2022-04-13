@@ -25,7 +25,7 @@ simple MAVLinkRandomWaypointMobility extends MAVLinkMobilityBase
 {
     parameters:
         // Speed at which the vehicle should travel
-        volatile double speed @unit(mps) = default(mps);
+        volatile double speed @unit(mps) = default(20mps);
         // Time the vehicle will wait before traveling to the next waypoint
         volatile double waitTime @unit(s) = default(0s); // wait time between reaching a target and choosing a new one
         // Radius of the waypoint. Vehicles within this radius will be considered to have reached the waypoint

@@ -27,7 +27,7 @@ package mavsimnet.manager;
 // This module requires you to use inet::RealTimeScheduler as a scheduler for your simulation. This can be set up by placing this line in your
 // simulation's .ini:
 //
-// <pre>scheduler-class = "inet::RealTimeScheduler"</pre>
+// > scheduler-class = "inet::RealTimeScheduler"
 //
 // This module's presence is necessary if you want to use MAVLinkMobity mobility modules for your vehicles.
 //
