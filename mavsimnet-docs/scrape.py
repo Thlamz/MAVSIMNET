@@ -23,7 +23,8 @@ def get_comments(end_line, lines):
         
         comment = "\n".join(comment_lines)
     return comment
-for filename in glob.iglob("../src/" + '**/*.ned', recursive=True):
+filenames = [filename for filename in glob.iglob("../src/" + '**/*.ned', recursive=True)]
+for filename in filenames:
     with open(filename, "r") as file:
         module_name = filename.removesuffix('.ned')[(filename.rfind('\\') or filename.rfind('/')) + 1:]
         lines = file.readlines()
@@ -35,6 +36,13 @@ for filename in glob.iglob("../src/" + '**/*.ned', recursive=True):
         
         if module_line == -1:
             continue
+        module_extension = ""
+        if 'extends' in lines[module_line]:
+            module_extension = re.search(r"extends (\w+)", lines[module_line]).group(1)
+            
+            if any([module_extension in filename for filename in filenames]):
+                module_extension = f"[{module_extension}](/Modules/{module_extension}/)"
+            module_extension = "Extends: " + module_extension
 
         module_description = get_comments(module_line - 1, lines)
 
@@ -64,6 +72,7 @@ for filename in glob.iglob("../src/" + '**/*.ned', recursive=True):
                     parameters.append(parameter)
 
         documentation = f"# {module_name}\n" \
+                        f"{module_extension}\n" \
                         f"## Description\n" \
                         f"{module_description}\n" \
                         f"## Parameters\n\n" \

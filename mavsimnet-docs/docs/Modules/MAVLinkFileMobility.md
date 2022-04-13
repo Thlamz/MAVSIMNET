@@ -1,4 +1,5 @@
 # MAVLinkFileMobility
+Extends: [MAVLinkMobilityBase](/Modules/MAVLinkMobilityBase/)
 ## Description
 
  Mobility module that reads a MAVLink waypoint mission file, in the same format produced by

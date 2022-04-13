@@ -1,4 +1,5 @@
 # MAVLinkRandomWaypointMobility
+Extends: [MAVLinkMobilityBase](/Modules/MAVLinkMobilityBase/)
 ## Description
 
  This module is analogous to INET's RandomWaypointMobility. The vehicle will follow random waypoints within the environment constraints

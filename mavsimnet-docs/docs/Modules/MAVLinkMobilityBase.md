@@ -1,4 +1,5 @@
 # MAVLinkMobilityBase
+Extends: MovingMobilityBase
 ## Description
 
  Base module for mobility modules that want to implement mobility using a simulated SITL instance.
