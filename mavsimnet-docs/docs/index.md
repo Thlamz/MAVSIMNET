@@ -51,7 +51,7 @@ Further information about this module and how it works can be found [here](/Modu
 
 Using the available mobility modules is as simple as setting your node's mobility module. You can do this with the following command, using the RandomWaypointMobility module as an example:
 
-> *.client[*].mobility.typename = "MAVLinkRandomWaypointMobility"
+> \*.client[\*].mobility.typename = "MAVLinkRandomWaypointMobility"
 
 After setting this you need to pay attention to the module's required parameters. Those can be found in the module's documentation page. Remember to pay attention if the module extends another one, as the required fields for the latter will also need to be filled. 
 
@@ -59,6 +59,5 @@ In general the parameters you need to fill when using any of the MAVSIMNET mobil
 
 | Parameter | Type | Description |
 | --------- | ---- | ----------- |
-| targetSystem | *string* | This is a unique identifier of the simulated vehicle instance. <br>You should take care not to repeat this ID if your simulation<br> contains more than on MAVLinkMobility vehicle. |
 | vehicleType | *int* | MAVLink type of vehicle that this class represents <br>(COPTER=1, PLANE=2, ROVER=4) |
 | paramPath | *string* | Path for the parameters for this vehicle. These are the parameters<br> you downloaded in step 5 of the installation. <br>**Do not use parameters for a different vehicle type** |

@@ -26,7 +26,7 @@ def get_comments(end_line, lines):
 filenames = [filename for filename in glob.iglob("../src/" + '**/*.ned', recursive=True)]
 for filename in filenames:
     with open(filename, "r") as file:
-        module_name = filename.removesuffix('.ned')[(filename.rfind('\\') or filename.rfind('/')) + 1:]
+        module_name = filename.removesuffix('.ned')[filename.rfind('/') + 1:]
         lines = file.readlines()
         module_line = -1
         for index, line in enumerate(lines):
