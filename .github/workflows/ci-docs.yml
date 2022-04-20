@@ -29,5 +29,6 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Deploy docs using mkdocs
         run: |
+          pip install mkdocs
           cd mavsimnet-docs
           mkdocs gh-deploy
