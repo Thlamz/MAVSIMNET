@@ -11,3 +11,4 @@
 *.parm
 *.DAT
 /.computed/
+**/docs/*

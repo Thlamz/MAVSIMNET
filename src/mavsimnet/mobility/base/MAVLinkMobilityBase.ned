@@ -37,7 +37,9 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
         // systemId of this vehicle instance. This is a unique identifier of the simulated vehicle instance. 
         // You should take care not to repeat this ID if your simulation contains more than on MAVLinkMobility
         // vehicle.
-        int targetSystem;
+        // By default will use -1, which sets the targetSystem to the ID of the module. Be careful as this might
+        // conflict with other module's custom targetSystems.
+        int targetSystem = default(-1);
         // componentId of this vehicle instance. Generally can be left as is.
         int targetComponent = default(1);
         

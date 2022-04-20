@@ -17,7 +17,7 @@ Extends: MovingMobilityBase
 | Name | Type | Unit | Default value | Description |
 | ---- | ---- | ---- | ------------- | ----------- |
 | managerModule | string |  | "mavlinkManager" |  Path to the simulation's MAVLinkManager module in the simulation. This is required. |
-| targetSystem | int |  |  |  systemId of this vehicle instance. This is a unique identifier of the simulated vehicle instance.<br> You should take care not to repeat this ID if your simulation contains more than on MAVLinkMobility<br> vehicle. |
+| targetSystem | int |  | -1 |  systemId of this vehicle instance. This is a unique identifier of the simulated vehicle instance.<br> You should take care not to repeat this ID if your simulation contains more than on MAVLinkMobility<br> vehicle.<br> By default will use -1, which sets the targetSystem to the ID of the module. Be careful as this might<br> conflict with other module's custom targetSystems. |
 | targetComponent | int |  | 1 |  componentId of this vehicle instance. Generally can be left as is. |
 | vehicleType | int |  | 1 |  MAVLink type of vehicle that this class represents<br> COPTER=1<br> PLANE=2<br> ROVER=4 |
 | paramPath | string |  |  |  Path for the parameters for this vehicle.<br> Default parameters can be found for your vehicle type [here](https://github.com/ArduPilot/ardupilot/tree/master/Tools/autotest/default_params).<br> **Be aware that incorrect parameters can prevent this vehicle from working.** |

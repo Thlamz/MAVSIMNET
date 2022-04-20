@@ -28,7 +28,7 @@ void MAVLinkMobilityBase::initialize(int stage)
 {
     MovingMobilityBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        targetSystem = par("targetSystem");
+        targetSystem = (par("targetSystem").intValue() == -1) ? getId() : par("targetSystem");
         targetComponent = par("targetComponent");
         vehicleType = static_cast<VehicleType>(par("vehicleType").intValue());
         manager = getModuleFromPar<MAVLinkManager>(par("managerModule"), this, true);
