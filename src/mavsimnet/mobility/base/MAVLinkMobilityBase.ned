@@ -60,9 +60,11 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
         string paramPath;
         
         // Base port for the SITL simulators.
-        // The actual PORT the simulators will be run is basePort + (systemId * 10) where systemId is the system ID of the vehicle
-        // being simulated.
-        // If you don't want port comflicts set the same value for ALL MAVLink mobility modules and use different systemIds for each of them.
+        // The actual PORT the simulators will be run is basePort + (systemId * 10) where 
+        // systemId is the system ID of the vehicle being simulated.
+        // If you don't want port comflicts set the same value for ALL MAVLink mobility modules and use 
+        // different systemIds for each of them. Or don't set basePort or targetSystem at all, the modules 
+        //will automatically figura out ports that don't cause conflict.
         int basePort = default(5505);
         
         // Path to the ArduCopter binary. Used to run simulator instances for this vehicle
