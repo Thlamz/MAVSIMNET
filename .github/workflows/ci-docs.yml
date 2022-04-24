@@ -22,8 +22,6 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v3.1.2
 
       # Runs a set of commands using the runners shell
@@ -32,4 +30,4 @@ jobs:
           pip install mkdocs
           cd mavsimnet-docs
           python scrape.py
-          mkdocs gh-deploy
+          mkdocs gh-deploy --force
