@@ -21,7 +21,6 @@ import inet.node.inet.AdhocHost;
 import inet.visualizer.integrated.IntegratedVisualizer;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.physicallayer.ieee802154.packetlevel.Ieee802154NarrowbandScalarRadioMedium;
-import mavsimnet.manager.MAVLinkManager;
 
 network Communication_simulation
 {
@@ -46,9 +45,6 @@ network Communication_simulation
         }
         radioMedium: Ieee802154NarrowbandScalarRadioMedium {
             @display("p=200,0");
-        }
-        
-        mavlinkManager: MAVLinkManager {
         }
         
         client[numClients]: AdhocHost

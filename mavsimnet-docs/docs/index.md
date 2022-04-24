@@ -35,25 +35,19 @@ To verify you have completed the installation successfuly run the randomwaypoint
 
 The mobility modules available in this framework are instances of INET mobility modules. If you do not know what those are or how to use them you can check [INET's documentation](https://inet.omnetpp.org/docs/users-guide/index.html). There you will learn how to set up a simulation environment, populate it with nodes and [set them up with mobility modules](https://inet.omnetpp.org/docs/users-guide/index.html). After your simulation is set up there is only a couple things you need to worry about.
 
-##### Manager
-
-The MAVLinkManager module is responsible for starting the SITL simulation instances and communicating with them. Every MAVSIMNET simulation is **required** to have an instance of this module. It is recomended to set it up directly as a submodule of your network with the name *mavlinkManager* but you can choose any name you want, as long as you set up the *managerModule* parameter on your mobility modules. 
-
-After placing this module in your simulation you need to set up the paths to the SITL simulators for each vehicle type supported. Currently you have to set up the *copterSimulatorPath*, *planeSimulatorPath* and *roverSimulatorPath* parameters. These are the paths to the files you have downloaded in step 4 of the installation, more specifically the path to the simulator binaries (*.elf* file on windows and extensionless file on linux). For example, if you ara on windows and have placed the copter simulator in the CopterSimulator file of the root directory of your C: drive, the parameter should be set to:
-
-> manager.copterSimulatorPath = "C:\\\CopterSimulator\\\ArduCopter.elf"
-
-Notice the escapes characters as windows uses back-slashes in paths. If you are not using a vehicle type you can leave the path for that vehicle's simulator as an empty string. 
-
-Further information about this module and how it works can be found [here](/Modules/MAVLinkManager).
-
-##### Mobility
-
 Using the available mobility modules is as simple as setting your node's mobility module. You can do this with the following command, using the RandomWaypointMobility module as an example:
 
 > \*.client[\*].mobility.typename = "MAVLinkRandomWaypointMobility"
 
-After setting this you need to pay attention to the module's required parameters. Those can be found in the module's documentation page. Remember to pay attention if the module extends another one, as the required fields for the latter will also need to be filled. 
+After placing this module in your simulation you need to set up the paths to the SITL simulators for each vehicle type supported. Currently you have to set up the *copterSimulatorPath*, *planeSimulatorPath* and *roverSimulatorPath* parameters. These are the paths to the files you have downloaded in step 4 of the installation, more specifically the path to the simulator binaries (*.elf* file on windows and extensionless file on linux). For example, if you ara on windows and have placed the copter simulator in the CopterSimulator file of the root directory of your C: drive, the parameter should be set to:
+
+> *.client.copterSimulatorPath = "C:\\\CopterSimulator\\\ArduCopter.elf"
+
+Notice the escapes characters as windows uses back-slashes in paths. 
+
+**INFO:** If you are not using a vehicle type you can leave the path for that vehicle's simulator as an empty string. 
+
+After setting this up you need to pay attention to the module's required parameters. Those can be found in the module's documentation page. Remember to pay attention if the module extends another one, as the required fields for the latter will also need to be filled. 
 
 In general the parameters you need to fill when using any of the MAVSIMNET mobility models are:
 

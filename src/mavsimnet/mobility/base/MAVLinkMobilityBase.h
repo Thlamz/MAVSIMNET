@@ -22,27 +22,40 @@
 #include <memory>
 #include "inet/mobility/base/MovingMobilityBase.h"
 #include "inet/common/geometry/common/GeographicCoordinateSystem.h"
+#include "inet/common/scheduler/RealTimeScheduler.h"
 #include "mavlink/ardupilotmega/mavlink.h"
-#include "mavsimnet/manager/MAVLinkManager.h"
+#include "mavsimnet/utils/subprocess/process.h"
 #include "mavsimnet/mobility/base/MAVLinkInstruction.h"
 #include "mavsimnet/utils/VehicleTypes.h"
 
+using namespace inet;
+
 namespace mavsimnet {
 
-class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IMAVLinkVehicle
+class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler::ICallback
 {
-  public:
-    // Callback function called when a message is received from the simulated SITL instance. The default behaviour is to
-    // check if the message completes the condition of the active MAVLinkInstruction (if one exists) and to call the next
-    // MAVLinkInstruction if the current one is done.
-    virtual void receiveTelemetry(mavlink_message_t message) override;
-
   protected:
     virtual void initialize(int stage) override;
+    // Starts a SITL simulator instance
+    virtual void startSimulator();
+    // Opens the socket to the SITL instance
+    virtual void openSocket();
+
     virtual void handleMessage(cMessage *msg) override;
+
     virtual void finish() override;
     virtual void move() override;
     virtual void orient() override;
+
+    // This function is called by the RealTimeScheduler when a message is received on the open socket.
+    // It reads the message and translates it to a MAVLink message that is sent to receibeTelemetry.
+    // It should probably not be overriden.
+    virtual bool notify(int fd) override;
+
+    // Callback function called when a message is received from the simulated SITL instance. The default behaviour is to
+    // check if the message completes the condition of the active MAVLinkInstruction (if one exists) and to call the next
+    // MAVLinkInstruction if the current one is done.
+    virtual void receiveTelemetry(mavlink_message_t message);
 
     // Performs initial setup on the vehicle. This includes setting update rate and setting home to current position
     virtual void performInitialSetup();
@@ -81,13 +94,20 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public MAVLinkManager::IM
     };
 
   protected:
+    int basePort, socketFd;
+    char buf[256];
+    VehicleType vehicleType;
+    RealTimeScheduler *rtScheduler;
     uint8_t systemId, componentId, targetSystem, targetComponent;
     Coord currentPosition;
     Quaternion currentOrientation;
-    MAVLinkManager *manager;
     IGeographicCoordinateSystem *coordinateSystem;
+    TinyProcessLib::Process* simulatorProcess;
+    std::string paramPath;
+    std::string copterSimulatorPath;
+    std::string planeSimulatorPath;
+    std::string roverSimulatorPath;
   private:
-    int fd;
     std::queue<std::shared_ptr<Instruction>> instructionQueue;
 
     std::shared_ptr<Instruction> activeInstruction = nullptr;

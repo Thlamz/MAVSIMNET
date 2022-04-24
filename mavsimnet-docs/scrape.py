@@ -23,6 +23,14 @@ def get_comments(end_line, lines):
         
         comment = "\n".join(comment_lines)
     return comment
+
+import os
+import glob
+
+# Removing old files
+for f in glob.glob('./docs/Modules/*'):
+    os.remove(f)
+
 filenames = [filename for filename in glob.iglob("../src/" + '**/*.ned', recursive=True)]
 for filename in filenames:
     with open(filename, "r") as file:

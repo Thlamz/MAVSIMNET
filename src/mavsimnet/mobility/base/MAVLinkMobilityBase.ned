@@ -18,12 +18,9 @@ package mavsimnet.mobility.base;
 import inet.mobility.base.MovingMobilityBase;
 //
 // Base module for mobility modules that want to implement mobility using a simulated SITL instance.
-// This module requires a MAVLinkManager module in your simulation. The path to this module should be specified in the
-// managerModule parameter. 
 //
-// During the OMNeT++ simulation initialization phases this module will register a vehicle instance
-// with the managerModule which will start a SITL instance and connect to it. This module will them be responsible for receiving
-// telemetry and sending messages to the simulated vehicle.
+// During the OMNeT++ simulation initialization phases this module will instantiate a SITL instance and connect to it. 
+// This module will them be responsible for receiving telemetry and sending messages to the simulated vehicle.
 //
 // This is a base module and should not be used directly in a simulation. It is meant to be used as a base for other modules that
 // want to implement realistic mobility using a SITL instance.  
@@ -32,8 +29,16 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
     // TODO: Add support for simulating real vehicles
     parameters:
         @class(MAVLinkMobilityBase);
-        // Path to the simulation's MAVLinkManager module in the simulation. This is required.
-        string managerModule = default("mavlinkManager");
+        
+        // System ID of this GCS.
+        // You do not need to change this unless you are trying to connect to the SITL instance
+        // with another GCS software that uses this ID
+    	int systemId = default(235);
+    	// Component ID of this GCS.
+    	// You do not need to change this unless you are trying to connect to the SITL instance
+        // with another GCS software that uses this ID
+        int componentId = default(235);
+        
         // systemId of this vehicle instance. This is a unique identifier of the simulated vehicle instance. 
         // You should take care not to repeat this ID if your simulation contains more than on MAVLinkMobility
         // vehicle.
@@ -53,5 +58,28 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
         // Default parameters can be found for your vehicle type [here](https://github.com/ArduPilot/ardupilot/tree/master/Tools/autotest/default_params).
         // **Be aware that incorrect parameters can prevent this vehicle from working.** 
         string paramPath;
+        
+        // Base port for the SITL simulators.
+        // The actual PORT the simulators will be run is basePort + (systemId * 10) where systemId is the system ID of the vehicle
+        // being simulated.
+        // If you don't want port comflicts set the same value for ALL MAVLink mobility modules and use different systemIds for each of them.
+        int basePort = default(5505);
+        
+        // Path to the ArduCopter binary. Used to run simulator instances for this vehicle
+        // A stable version can be downloaded from: 
+        // https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/CopterStable/ (WINDOWS)
+        // https://firmware.ardupilot.org/Copter/stable/SITL_x86_64_linux_gnu/ (LINUX)
+		string copterSimulatorPath;
+		// Path to the ArduPlane binary. Used to run simulator instances for this vehicle
+		// A stable version can be downloaded from: 
+        // https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/PlaneStable/ (WINDOWS)
+        // https://firmware.ardupilot.org/Plane/stable/SITL_x86_64_linux_gnu/ (LINUX)
+		string planeSimulatorPath;
+		//// Path to the ArduRover binary. Used to run simulator instances for this vehicle
+		// A stable version can be downloaded from: 
+        // https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/RoverStable/ (WINDOWS)
+        // https://firmware.ardupilot.org/Rover/stable/SITL_x86_64_linux_gnu/ (LINUX)
+		// Path to the Rover binary. Used to run simulator instances for this vehicle
+		string roverSimulatorPath;		
         
 }
