@@ -23,12 +23,18 @@ import inet.mobility.base.MovingMobilityBase;
 // This module will them be responsible for receiving telemetry and sending messages to the simulated vehicle.
 //
 // This is a base module and should not be used directly in a simulation. It is meant to be used as a base for other modules that
-// want to implement realistic mobility using a SITL instance.  
+// want to implement realistic mobility using a SITL instance.
+//
+// This and all child modules **require** the coordinateSystemModule parameter to be set. This is because a coordinate system is
+// required to translate geographical coordinates to scene coordinates. By default the coordinateSystemModule is set to "coordinateSystem"
+// so all you need to do is include a IGeographicCoordinateSystem module in your simulation. The showcase simulations are already set
+// up with a module like this.
 simple MAVLinkMobilityBase extends MovingMobilityBase
 {
     // TODO: Add support for simulating real vehicles
     parameters:
         @class(MAVLinkMobilityBase);
+        coordinateSystemModule = "coordinateSystem";
         
         // System ID of this GCS.
         // You do not need to change this unless you are trying to connect to the SITL instance
@@ -82,6 +88,15 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
         // https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/RoverStable/ (WINDOWS)
         // https://firmware.ardupilot.org/Rover/stable/SITL_x86_64_linux_gnu/ (LINUX)
 		// Path to the Rover binary. Used to run simulator instances for this vehicle
-		string roverSimulatorPath;		
+		string roverSimulatorPath;
+		
+        // Latitude of the initial position of the drone.
+        // The default value is the default home of the SITL simulator
+        double initialLatitude @unit(deg) = default(-35.36326015deg);
+        // Longitude of the initial position of the drone.
+        // The default value is the default home of the SITL simulator
+        double initialLongitude @unit(deg) = default(149.16523839deg);
+        // Altitude of the initial position of the drone.
+        double initialAltitude @unit(m) = default(0m);
         
 }

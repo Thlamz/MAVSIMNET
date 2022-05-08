@@ -68,6 +68,10 @@ void MAVLinkMobilityBase::startSimulator() {
     command += std::to_string(basePort + (targetSystem * 10));
     command += " --sysid ";
     command += std::to_string(+targetSystem);
+    command += " --home ";
+    command += std::to_string(par("initialLatitude").doubleValue()) + "," +
+               std::to_string(par("initialLongitude").doubleValue()) + "," +
+               std::to_string(par("initialAltitude").doubleValue()) + ",0";
 
     EV_INFO << "Starting simulator with command: " << command << std::endl;
 
@@ -245,17 +249,6 @@ void MAVLinkMobilityBase::performInitialSetup() {
     queueMessage(message,
             TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem),
             15, 5, "Setting stream rate for heart beats");
-
-    cmd = {};
-    cmd.command = MAV_CMD_DO_SET_HOME;
-    cmd.confirmation = 0;
-    cmd.param1 = 1; // Set current location as home
-    cmd.target_component = targetComponent;
-    cmd.target_system = targetSystem;
-    mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
-    queueMessage(message,
-            TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_DO_SET_HOME, targetSystem),
-            15, 5, "Setting home");
 }
 
 void MAVLinkMobilityBase::queueMessage(mavlink_message_t message, Condition condition, simtime_t timeout, int retries, std::string label) {
