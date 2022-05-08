@@ -12,3 +12,4 @@
 *.DAT
 /.computed/
 **/docs/*
+**/logs/*
