@@ -35,6 +35,17 @@ To verify you have completed the installation successfuly run the randomwaypoint
 
 The mobility modules available in this framework are instances of INET mobility modules. If you do not know what those are or how to use them you can check [INET's documentation](https://inet.omnetpp.org/docs/users-guide/index.html). There you will learn how to set up a simulation environment, populate it with nodes and [set them up with mobility modules](https://inet.omnetpp.org/docs/users-guide/index.html). After your simulation is set up there is only a couple things you need to worry about.
 
+A very important thing to take note of is that your simulation has to use INET's Real Time Scheduler. This guarantees that the SITL instances and OMNET++ are syncronized. You can set this up in your .ini file with this line:
+
+> scheduler-class = "inet::RealTimeScheduler"
+
+
+> **WARNING:** If you are on windows and using INET version 4.2.5 or lower INET will not compile if you use inet::RealTimeScheduler with the Clang compiler. You will need to compile OMNeT++ with gcc. To do this change the value of the `PREFER_CLANG` parameter to "no". In the *configure.user* change the line to `PREFER_CLANG=no`. After doing this run these commands in mingw:
+
+    make clean
+    ./configure
+    make
+
 Using the available mobility modules is as simple as setting your node's mobility module. You can do this with the following command, using the RandomWaypointMobility module as an example:
 
 > \*.client[\*].mobility.typename = "MAVLinkRandomWaypointMobility"
