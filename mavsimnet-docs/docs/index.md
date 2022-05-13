@@ -66,3 +66,12 @@ In general the parameters you need to fill when using any of the MAVSIMNET mobil
 | --------- | ---- | ----------- |
 | vehicleType | *int* | MAVLink type of vehicle that this class represents <br>(COPTER=1, PLANE=2, ROVER=4) |
 | paramPath | *string* | Path for the parameters for this vehicle. These are the parameters<br> you downloaded in step 5 of the installation. <br>**Do not use parameters for a different vehicle type** |
+
+That is all you need to know if you plan to use this framework's existing modules with no modifications. If you plan on expanding upon it of modifying the modules there are a few more things you should be aware of.
+
+## Development
+There are two important modules in the repository's utils folder that are useful for developers. 
+
+The VehicleRoutines module offers several utility functions that simplify common tasks using the MAVLink protocol. These functions generate a vector of instructions that should be queued using MAVLinkMobilityBase's queueInstructions function. 
+
+The other important module is the TelemetryConditions module. As explained in the [MAVLinkMobilityBase](/MAVSIMNET/Modules/MAVLinkMobilityBase/) documentation messages are dispatched to the SITL instance using a message queue. This message queue moves only when the front-most message is concluded. What defines a message as concluded is a function, called a Condition, that gets called on every telemetry received. This allows a developer to define the condition that needs to be fulfilled before the next message in the queue is sent. A takeoff message could wait for the vehicle to reach a certain altutde, for example. The TelemetryRoutines module has some ready-to-use conditions for these situations.
