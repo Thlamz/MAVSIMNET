@@ -84,7 +84,7 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler:
     Condition getActiveCondition() { return (activeInstruction != nullptr) ? activeInstruction->condition : Condition{}; };
     simtime_t getActiveTimeout() { return (activeInstruction != nullptr) ? activeInstruction->timeout : 0; };
     int getActiveRetries() { return (activeInstruction != nullptr) ? activeInstruction->retries : 0; };
-    bool getActiveCompleted() { return (activeInstruction != nullptr) ? activeInstruction->completed : false; };
+    bool getActiveCompleted() { return (activeInstruction != nullptr) ? activeInstruction->completed : true; };
     std::string getActiveLabel() { return (activeInstruction != nullptr) ? activeInstruction->label : ""; };
     Coord getCurrentCoord() { return (activeInstruction != nullptr) ? currentPosition : Coord{}; }
 

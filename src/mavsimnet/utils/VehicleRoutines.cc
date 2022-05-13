@@ -49,7 +49,7 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffCopter(uint8_t senderSystem,
     cmd.target_system = targetSystem;
 
     mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
-    instructions.push_back(std::make_shared<Instruction>(msg, TelemetryConditions::getCheckAltitude(25, 3, targetSystem), timeout, retries, "Sending TAKEOFF command"));
+    instructions.push_back(std::make_shared<Instruction>(msg, TelemetryConditions::getCheckAltitude(altitude, 3, targetSystem), timeout, retries, "Sending TAKEOFF command"));
 
     return instructions;
 }
