@@ -29,7 +29,3 @@ std::vector<std::shared_ptr<Instruction>> guidedGoto(VehicleType type, double la
         inet::IGeographicCoordinateSystem *coordinateSystem, uint8_t targetSystem, uint8_t targetComponent, omnetpp::simtime_t timeout=60, int retries=3);
 }
 }
-
-
-
-#endif /* MAVSIMNET_UTILS_VEHICLEROUTINES_H_ */
