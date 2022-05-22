@@ -1,13 +1,3 @@
-/*
- * VehicleRoutines.h
- *
- *  Created on: 12 de mar de 2022
- *      Author: thlam
- */
-
-#ifndef MAVSIMNET_UTILS_VEHICLEROUTINES_H_
-#define MAVSIMNET_UTILS_VEHICLEROUTINES_H_
-
 #include <vector>
 #include <memory>
 #include "VehicleTypes.h"
@@ -15,6 +5,12 @@
 #include "inet/common/geometry/common/GeographicCoordinateSystem.h"
 
 namespace mavsimnet {
+// 
+// This module provides several utility functions that facilitate the communication
+// with the SITL instance. Each function generates a vector of instructions that 
+// command the simulated vehicle to perform a common task. This vector of instructions
+// can be read by [MAVLinkMobilityBase](/MAVSIMNET/Modules/MAVLinkMobilityBase/) with the
+// queueInstructions() method.
 namespace VehicleRoutines {
 
 // Instructs the vehicle to ARM and TAKEOFF

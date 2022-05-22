@@ -31,8 +31,8 @@ import glob
 for f in glob.glob('./docs/Modules/*'):
     os.remove(f)
 
-filenames = [filename for filename in glob.iglob("../src/" + '**/*.ned', recursive=True)]
-for filename in filenames:
+ned_filenames = [filename for filename in glob.iglob("../src/" + '**/*.ned', recursive=True)]
+for filename in ned_filenames:
     with open(filename, "r") as file:
         module_name = filename.removesuffix('.ned')[filename.rfind('/') + 1:]
         lines = file.readlines()
@@ -48,22 +48,22 @@ for filename in filenames:
         if 'extends' in lines[module_line]:
             module_extension = re.search(r"extends (\w+)", lines[module_line]).group(1)
             
-            if any([module_extension in filename for filename in filenames]):
+            if any([module_extension in filename for filename in ned_filenames]):
                 module_extension = f"[{module_extension}](/Modules/{module_extension}/)"
             module_extension = "Extends: " + module_extension
 
         module_description = get_comments(module_line - 1, lines)
 
-        parameter_line = -1
+        function_line = -1
         for index,line in enumerate(lines):
             if "parameters:" in line:
-                parameter_line = index
+                function_line = index
                 break
         
         parameters: List[Parameter] = []
-        if parameter_line != -1:
-            for index, line in enumerate(lines[parameter_line + 1:]):
-                index += parameter_line + 1
+        if function_line != -1:
+            for index, line in enumerate(lines[function_line + 1:]):
+                index += function_line + 1
                 if 'submodules' in line or 'gates' in line:
                     break
                 line = line.strip()
@@ -91,4 +91,46 @@ for filename in filenames:
             documentation += f"| {parameter['name']} | {parameter['type']} | {parameter['unit']} | {parameter['default']} | {parameter['description']} |\n"
 
         with open(f"./docs/Modules/{module_name}.md", "w+") as doc_file:
+            doc_file.write(documentation)
+
+
+ned_filenames = [filename for filename in glob.iglob("../src/mavsimnet/utils/*.h", recursive=False)]
+for filename in ned_filenames:
+    with open(filename, "r") as file:
+        module_name = filename.removesuffix('.h')[filename.rfind('/') + 1:]
+        lines = file.readlines()
+        module_line = -1
+        for index, line in enumerate(lines):
+            if f"namespace {module_name}" in line:
+                module_line = index
+                break
+        
+        if module_line == -1:
+            continue
+
+        module_description = get_comments(module_line - 1, lines)
+
+        function_line = -1
+        module_functions = ""
+        function_pattern = re.compile(r"^[ \t]*.* (.*?)\(.*;$")
+        while function_line < len(lines) - 1:
+            function_line += 1
+
+            match = function_pattern.match(lines[function_line])
+            if match is None:
+                continue
+            function_name = match[1]
+            
+            function_description = get_comments(function_line - 1, lines)
+
+            module_functions += f"### {function_name}\n\n" \
+                                f"`{lines[function_line].strip()}`\n\n" \
+                                f"{function_description}\n\n"
+
+        documentation = f"# {module_name}\n" \
+                        f"## Description\n" \
+                        f"{module_description}\n\n" \
+                        f"## Functions\n\n" \
+                        f"{module_functions}\n\n"
+        with open(f"./docs/Utils/{module_name}.md", "w+") as doc_file:
             doc_file.write(documentation)

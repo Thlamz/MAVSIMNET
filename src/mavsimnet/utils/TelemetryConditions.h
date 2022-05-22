@@ -3,6 +3,11 @@
 #include <functional>
 
 namespace mavsimnet {
+// 
+// This module contains utility functions used as or to generate Condition functions.
+// Conditions are functions used by [MAVLinkMobilityBase](/MAVSIMNET/Modules/MAVLinkMobilityBase/) to check 
+// if a MAVLink message is concluded and a new one should be sent to the simulator. They work by receiving incoming telemetry
+// on their mavlink_message_t parameter and returning a boolean to flag if that telemetry completes the condition.
 namespace TelemetryConditions {
     // An empty condition
     bool checkEmpty(mavlink_message_t);
