@@ -15,6 +15,8 @@
 
 #include "MAVLinkMobilityBase.h"
 #include "mavsimnet/utils/TelemetryConditions.h"
+#include <chrono>
+#include <thread>
 
 using namespace omnetpp;
 using namespace inet;
@@ -44,8 +46,65 @@ void MAVLinkMobilityBase::initialize(int stage)
         openSocket();
         performInitialSetup();
     }
+    if (stage == 2) {
+        if(par("waitUntilReady")) {
+            waitUntilReady();
+        }
+    }
 }
 
+
+void MAVLinkMobilityBase::waitUntilReady() {
+    int length;
+
+    // Prematurely and forcefully sending the message rate for the EKF_STATUS_REPORT message.
+    // This message is used to determine if a vehicle is ready to arm. It is also sent by
+    // performInitialSetup but in that function it is queued, and the queue won't proceed
+    // until the simulation is started, which only happens after this function returns.
+    mavlink_message_t message;
+    mavlink_command_long_t cmd = {};
+    cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+    cmd.confirmation = 0;
+    cmd.param1 = MAVLINK_MSG_ID_EKF_STATUS_REPORT;
+    cmd.param2 = 2000000; // 0.5 Hz
+    cmd.param7 = 0;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
+    mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
+    int retries = 0;
+    sendMessage(message, true, retries, 10);
+
+    Condition preReadyCondition = TelemetryConditions::getCheckPreArm(targetSystem);
+    EV_INFO << "Waiting until simulator is ready" << std::endl;
+    while(true) {
+        if((length = recv(socketFd, buf, 256, 0)) == SOCKET_ERROR) {
+            int error = WSAGetLastError();
+            // Blocking errors are normal when no messages are present in a non-blocking socket
+            if(error == WSAEWOULDBLOCK) {
+                // Sleeps to save on processing power while waiting
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                continue;
+            }
+
+            std::cout << "Error receiving message, code: " << error << std::endl;
+            return;
+        }
+
+        mavlink_status_t status;
+        mavlink_message_t msg;
+
+        for (int i = 0; i < length; ++i)
+        {
+            if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status))
+            {
+                if(preReadyCondition(msg)) {
+                    EV_INFO << "Vehicle ready to arm" << std::endl;
+                    return;
+                }
+            }
+        }
+    }
+}
 
 void MAVLinkMobilityBase::startSimulator() {
     std::string command;
@@ -141,9 +200,11 @@ bool MAVLinkMobilityBase::notify(int incoming) {
         do {
             if((length = recv(incoming, buf, 256, 0)) == SOCKET_ERROR) {
                 int error = WSAGetLastError();
-                EV_DEBUG << "Received WSAEWOULDBLOCK, the socket is empty." << std::endl;
                 // Blocking errors are normal when no messages are present in a non-blocking socket
-                if(error == WSAEWOULDBLOCK) return true;
+                if(error == WSAEWOULDBLOCK) {
+                    EV_DEBUG << "Received WSAEWOULDBLOCK, the socket is empty." << std::endl;
+                    return true;
+                }
                 EV_ERROR << "Error receiving message, code: " << error << std::endl;
                 return false;
             }
@@ -267,6 +328,7 @@ void MAVLinkMobilityBase::queueInstructions(std::vector<std::shared_ptr<Instruct
 
 void MAVLinkMobilityBase::nextMessage() {
     EV_DETAIL << "Proceeding to next message" << std::endl;
+    Enter_Method_Silent();
     cancelEvent(timeoutMessage);
 
     if(instructionQueue.size() > 0) {

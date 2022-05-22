@@ -99,4 +99,13 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
         // Altitude of the initial position of the drone.
         double initialAltitude @unit(m) = default(0m);
         
+        // Waits until the SITL vehicle is ready to arm before the simulation is able to start. 
+        // **Warning**: If this option is set to true it may look like the simulation has crashed 
+        // on startup. This is because, to my knowledge, the only way of preventing the simulation
+        // from starting before the vehicle is ready to arm is to intetionally freeze the module's 
+        // initialization.
+        // **Warning**: This freeze may last for several minutes, depending on how many vehicles
+        // are being initiated and your machine's hardware.
+        bool waitUntilReady = default(false);
+        
 }

@@ -65,6 +65,7 @@ void MAVLinkRandomWaypointMobility::setTargetPosition(){
 
 
 void MAVLinkRandomWaypointMobility::move() {
+    Enter_Method_Silent();
     if(targetPosition != Coord::NIL && getActiveCompleted() && queueSize() == 0 && !waypointChangeMessage->isScheduled()) {
         EV_INFO << "Reached waypoint. Scheduling next random waypoint" << std::endl;
         scheduleAt(simTime() + waitTime, waypointChangeMessage);
@@ -78,7 +79,7 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     mavlink_message_t msg;
     
     // Commanding the vehicle to takeoff
-    queueInstructions(VehicleRoutines::armTakeoff(systemId, componentId, vehicleType, 50, targetSystem, targetComponent, 30, 3));
+    queueInstructions(VehicleRoutines::armTakeoff(systemId, componentId, vehicleType, 50, targetSystem, targetComponent, 5, 20));
 
     // Setting mode to guided, to prepare for random waypoint instructions
     queueInstructions(VehicleRoutines::setMode(systemId, componentId, vehicleType, VehicleRoutines::GUIDED, targetSystem, targetComponent));

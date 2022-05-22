@@ -36,6 +36,8 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler:
 {
   protected:
     virtual void initialize(int stage) override;
+    // Freezes initialization until the vehicle is pre-arm ready
+    virtual void waitUntilReady();
     // Starts a SITL simulator instance
     virtual void startSimulator();
     // Opens the socket to the SITL instance
