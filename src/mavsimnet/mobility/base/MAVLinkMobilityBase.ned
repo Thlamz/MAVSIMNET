@@ -34,7 +34,7 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
     // TODO: Add support for simulating real vehicles
     parameters:
         @class(MAVLinkMobilityBase);
-        coordinateSystemModule = "coordinateSystem";
+        coordinateSystemModule = default("coordinateSystem");
         
         // System ID of this GCS.
         // You do not need to change this unless you are trying to connect to the SITL instance

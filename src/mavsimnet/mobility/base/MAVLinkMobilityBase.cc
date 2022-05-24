@@ -18,6 +18,22 @@
 #include <chrono>
 #include <thread>
 
+#ifdef _WIN32
+#include <winsock2.h>
+#define SOCKET_ERROR_CODE WSAGetLastError()
+#define SOCKET_EMPTY_ERROR WSAEWOULDBLOCK
+#else
+#include
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <fcntl.h>
+#define SOCKET_ERROR -1
+#define SOCKET_ERROR_CODE errno
+#define SOCKET_EMPTY_ERROR EAGAIN
+#endif
+
 using namespace omnetpp;
 using namespace inet;
 
@@ -78,9 +94,9 @@ void MAVLinkMobilityBase::waitUntilReady() {
     EV_INFO << "Waiting until simulator is ready" << std::endl;
     while(true) {
         if((length = recv(socketFd, buf, 256, 0)) == SOCKET_ERROR) {
-            int error = WSAGetLastError();
+            int error = SOCKET_ERROR_CODE;
             // Blocking errors are normal when no messages are present in a non-blocking socket
-            if(error == WSAEWOULDBLOCK) {
+            if(error == SOCKET_EMPTY_ERROR) {
                 // Sleeps to save on processing power while waiting
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 continue;
@@ -140,25 +156,26 @@ void MAVLinkMobilityBase::startSimulator() {
 
 void MAVLinkMobilityBase::openSocket()
 {
-    WSADATA wsa;
     struct sockaddr_in server;
+#ifdef _WIN32
+    WSADATA wsa;
 
     EV_INFO << "Initialising Winsock..." << std::endl;
     if (WSAStartup(MAKEWORD(2,2),&wsa) != 0)
     {
-        EV_ERROR << "Failed. Error Code : %d\n",WSAGetLastError();
-        return;
+        EV_ERROR << "Failed. Error Code : %d\n",SOCKET_ERROR_CODE;
+        throw std::runtime_error("Error initializing socket library");
     }
 
     EV_INFO << "Initialised" << std::endl;
-
+#endif
     //Create a socket
     // TODO: This should be a UDP socket if we are connecting to a real vehicle
     int fd;
     if((fd = socket(AF_INET , SOCK_STREAM , 0)) == INVALID_SOCKET)
     {
-        EV_ERROR << "Could not create socket : " << WSAGetLastError() << std::endl;
-        return;
+        EV_ERROR << "Could not create socket : " << SOCKET_ERROR_CODE << std::endl;
+        throw std::runtime_error("Error creating socket");
     }
 
     socketFd = fd;
@@ -173,17 +190,25 @@ void MAVLinkMobilityBase::openSocket()
     //Bind
     if( connect(fd ,(struct sockaddr *)&server , sizeof(server)) == SOCKET_ERROR)
     {
-        EV_ERROR << "Connect failed with error code : " << WSAGetLastError() << std::endl;
-        return;
+        EV_ERROR << "Connect failed with error code : " << SOCKET_ERROR_CODE << std::endl;
+        throw std::runtime_error("Error connecting to socket");
     }
     EV_INFO << "Socket bound" << std::endl;
 
 
-    u_long mode = 1;  // 1 to enable non-blocking socket
-    if (ioctlsocket(fd, FIONBIO, &mode) == SOCKET_ERROR) {
-        EV_ERROR << "Setting socket to non-blocking failed with code : " << WSAGetLastError() << std::endl;
-        return;
-    }
+    #ifdef _WIN32
+       unsigned long mode = 1;
+       if(ioctlsocket(fd, FIONBIO, &mode) != 0) {
+           throw std::runtime_error("Error setting socket to non blocking");
+       }
+    #else
+       int flags = fcntl(fd, F_GETFL, 0);
+       if (flags == -1) return;
+       flags = (flags | O_NONBLOCK);
+       if(fcntl(fd, F_SETFL, flags) != 0) {
+           throw std::runtime_error("Error setting socket to non blocking");
+       }
+    #endif
     EV_INFO << "Socket set to non-blocking" << std::endl;
 
     rtScheduler->addCallback(fd, this);
@@ -199,10 +224,10 @@ bool MAVLinkMobilityBase::notify(int incoming) {
 
         do {
             if((length = recv(incoming, buf, 256, 0)) == SOCKET_ERROR) {
-                int error = WSAGetLastError();
+                int error = SOCKET_ERROR_CODE;
                 // Blocking errors are normal when no messages are present in a non-blocking socket
-                if(error == WSAEWOULDBLOCK) {
-                    EV_DEBUG << "Received WSAEWOULDBLOCK, the socket is empty." << std::endl;
+                if(error == SOCKET_EMPTY_ERROR) {
+                    EV_DEBUG << "Received SOCKET_EMPTY_ERROR, the socket is empty." << std::endl;
                     return true;
                 }
                 EV_ERROR << "Error receiving message, code: " << error << std::endl;
@@ -461,7 +486,12 @@ void MAVLinkMobilityBase::finish() {
     cancelAndDelete(timeoutMessage);
 
     rtScheduler->removeCallback(socketFd, this);
+
+#ifdef _WIN32
     closesocket(socketFd);
+#else
+    close(socketFd);
+#endif
 
     simulatorProcess->kill();
 
