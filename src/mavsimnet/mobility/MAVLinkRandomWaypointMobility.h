@@ -17,7 +17,7 @@
 #define __MAVSIMNET_MAVLINKRANDOMWAYPOINTMOBILITY_H_
 
 #include <omnetpp.h>
-#include "mavsimnet/mobility/base/MAVlinkMobilityBase.h"
+#include "mavsimnet/mobility/base/MAVLinkMobilityBase.h"
 #include "inet/mobility/single/RandomWaypointMobility.h"
 
 namespace mavsimnet {

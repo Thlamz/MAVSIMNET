@@ -22,13 +22,13 @@
 #define SOCKET_ERROR_CODE WSAGetLastError()
 #define SOCKET_EMPTY_ERROR WSAEWOULDBLOCK
 #else
-#include
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
 #define SOCKET_ERROR -1
+#define INVALID_SOCKET -1
 #define SOCKET_ERROR_CODE errno
 #define SOCKET_EMPTY_ERROR EAGAIN
 #endif
@@ -199,11 +199,23 @@ void MAVLinkMobilityBase::openSocket()
     server.sin_addr.s_addr = inet_addr("127.0.0.1");
     server.sin_port = htons( basePort + (targetSystem * 10) );
 
-    //Bind
-    if( connect(fd ,(struct sockaddr *)&server , sizeof(server)) == SOCKET_ERROR)
-    {
-        EV_ERROR << "Connect failed with error code : " << SOCKET_ERROR_CODE << std::endl;
-        throw std::runtime_error("Error connecting to socket");
+    // Bind
+    // Retries 5 times with sleeps in between. This prevents the socket from trying to connect while
+    // the simulator is still starting
+    int tries = 0;
+    while (true) {
+        if( connect(fd ,(struct sockaddr *)&server , sizeof(server)) == SOCKET_ERROR)
+        {
+            if(tries > 5) {
+                EV_ERROR << "Connect failed with error code : " << SOCKET_ERROR_CODE << std::endl;
+                throw std::runtime_error("Error connecting to socket");
+            } else {
+                tries++;
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+        } else {
+            break;
+        }
     }
     EV_INFO << "Socket bound" << std::endl;
 
@@ -297,7 +309,7 @@ void MAVLinkMobilityBase::handleMessage(cMessage *msg) {
                         mavlink_msg_heartbeat_encode(systemId, componentId, &heartbeat, &msg);
                     }
 
-                    int tries;
+                    int tries = 0;
                     sendMessage(heartbeat, false, tries, 0);
 
                     scheduleAt(simTime() + s(1).get(), heartbeatMessage);
@@ -520,6 +532,10 @@ void MAVLinkMobilityBase::finish() {
     close(socketFd);
 #endif
 
+    simulatorProcess->kill();
+}
+
+MAVLinkMobilityBase::~MAVLinkMobilityBase() {
     simulatorProcess->kill();
 }
 

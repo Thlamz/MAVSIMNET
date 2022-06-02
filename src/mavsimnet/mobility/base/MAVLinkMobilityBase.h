@@ -39,6 +39,7 @@ namespace mavsimnet {
 class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler::ICallback
 {
   protected:
+    virtual ~MAVLinkMobilityBase();
     virtual void initialize(int stage) override;
     // Freezes initialization until the vehicle is pre-arm ready
     virtual void waitUntilReady();
