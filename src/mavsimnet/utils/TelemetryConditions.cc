@@ -36,6 +36,7 @@ std::function<bool(mavlink_message_t)> getCheckCmdAck(uint8_t systemId, uint8_t 
             mavlink_command_ack_t ack;
 
             mavlink_msg_command_ack_decode(&message, &ack);
+            //std::cout << +ack.target_system << std::endl;
             return (ack.command == command && ack.result == MAV_RESULT_ACCEPTED && (ack.target_system == systemId || ack.target_system == 0));
         }
         return false;
@@ -167,8 +168,9 @@ std::function<bool(mavlink_message_t)> getCheckGlobalPosition(float lat, float l
             mavlink_msg_global_position_int_decode(&msg,&position);
 
             inet::GeoCoord currentCoord(inet::deg(position.lat/1e7), inet::deg(position.lon/1e7), inet::m(position.relative_alt / 1e3));
-
-            return coordinateSystem->computeSceneCoordinate(currentCoord).distance(targetCoords) <= tolerance;
+            inet::Coord currentSceneCoords = coordinateSystem->computeSceneCoordinate(currentCoord);
+            std::cout << "Vehicle " << +senderSystemId << " - Current: (" << currentSceneCoords.z << ", " << currentSceneCoords.y << ", " << currentSceneCoords.z << ") - Target: (" << targetCoords.x << ", " << targetCoords.y << ", " << targetCoords.z << ") - Distance: " << coordinateSystem->computeSceneCoordinate(currentCoord).distance(targetCoords) << " Tolerance - " << tolerance << std::endl;
+            return currentSceneCoords.distance(targetCoords) <= tolerance;
         }
         return false;
     };

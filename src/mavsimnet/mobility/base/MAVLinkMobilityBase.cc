@@ -19,7 +19,6 @@
 #include <thread>
 
 #ifdef _WIN32
-#include <winsock2.h>
 #define SOCKET_ERROR_CODE WSAGetLastError()
 #define SOCKET_EMPTY_ERROR WSAEWOULDBLOCK
 #else
@@ -61,6 +60,8 @@ void MAVLinkMobilityBase::initialize(int stage)
         startSimulator();
         openSocket();
         performInitialSetup();
+
+        scheduleAt(simTime() + s(1).get(), heartbeatMessage);
     }
     if (stage == 2) {
         if(par("waitUntilReady")) {
@@ -73,22 +74,9 @@ void MAVLinkMobilityBase::initialize(int stage)
 void MAVLinkMobilityBase::waitUntilReady() {
     int length;
 
-    // Prematurely and forcefully sending the message rate for the EKF_STATUS_REPORT message.
-    // This message is used to determine if a vehicle is ready to arm. It is also sent by
-    // performInitialSetup but in that function it is queued, and the queue won't proceed
-    // until the simulation is started, which only happens after this function returns.
-    mavlink_message_t message;
-    mavlink_command_long_t cmd = {};
-    cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
-    cmd.confirmation = 0;
-    cmd.param1 = MAVLINK_MSG_ID_EKF_STATUS_REPORT;
-    cmd.param2 = 2000000; // 0.5 Hz
-    cmd.param7 = 0;
-    cmd.target_component = targetComponent;
-    cmd.target_system = targetSystem;
-    mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
-    int retries = 0;
-    sendMessage(message, true, retries, 10);
+    // Condition that verifies if the necessary interval has been set
+    bool intervalSet = false;
+    Condition intervalAcknowledge = TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem);
 
     Condition preReadyCondition = TelemetryConditions::getCheckPreArm(targetSystem);
     EV_INFO << "Waiting until simulator is ready" << std::endl;
@@ -98,6 +86,7 @@ void MAVLinkMobilityBase::waitUntilReady() {
             // Blocking errors are normal when no messages are present in a non-blocking socket
             if(error == SOCKET_EMPTY_ERROR) {
                 // Sleeps to save on processing power while waiting
+                std::cout << "No messages in socket, sleeping..." << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 continue;
             }
@@ -106,6 +95,26 @@ void MAVLinkMobilityBase::waitUntilReady() {
             return;
         }
 
+        // Only sent if not already acknowledged
+        if (!intervalSet) {
+            // Prematurely and forcefully sending the message rate for the EKF_STATUS_REPORT message.
+            // This message is used to determine if a vehicle is ready to arm. It is also sent by
+            // performInitialSetup but in that function it is queued, and the queue won't proceed
+            // until the simulation is started, which only happens after this function returns.
+            mavlink_message_t message;
+            mavlink_command_long_t cmd = {};
+            cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+            cmd.confirmation = 0;
+            cmd.param1 = MAVLINK_MSG_ID_EKF_STATUS_REPORT;
+            cmd.param2 = 2000000; // 0.5 Hz
+            cmd.param7 = 0;
+            cmd.target_component = targetComponent;
+            cmd.target_system = targetSystem;
+            mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
+            int retries = 0;
+            sendMessage(message, true, retries, 10);
+            std::cout << "Forcefully setting interval for EKF status reports" << std::endl;
+        }
         mavlink_status_t status;
         mavlink_message_t msg;
 
@@ -113,6 +122,9 @@ void MAVLinkMobilityBase::waitUntilReady() {
         {
             if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status))
             {
+                std::cout << "Received message id " << +msg.msgid << " while waiting until simulator is ready" << std::endl;
+                // Checking for the aknowledgement of the interval message
+                intervalSet = intervalSet || intervalAcknowledge(msg);
                 if(preReadyCondition(msg)) {
                     EV_INFO << "Vehicle ready to arm" << std::endl;
                     return;
@@ -198,14 +210,14 @@ void MAVLinkMobilityBase::openSocket()
 
     #ifdef _WIN32
        unsigned long mode = 1;
-       if(ioctlsocket(fd, FIONBIO, &mode) != 0) {
+       if(ioctlsocket(fd, FIONBIO, &mode) == SOCKET_ERROR) {
            throw std::runtime_error("Error setting socket to non blocking");
        }
     #else
        int flags = fcntl(fd, F_GETFL, 0);
-       if (flags == -1) return;
+       if (flags == -1) throw;
        flags = (flags | O_NONBLOCK);
-       if(fcntl(fd, F_SETFL, flags) != 0) {
+       if(fcntl(fd, F_SETFL, flags) == SOCKET_ERROR) {
            throw std::runtime_error("Error setting socket to non blocking");
        }
     #endif
@@ -242,6 +254,7 @@ bool MAVLinkMobilityBase::notify(int incoming) {
             {
                 if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status))
                 {
+                    updatePosition(msg);
                     receiveTelemetry(msg);
                 }
             }
@@ -271,12 +284,28 @@ void MAVLinkMobilityBase::handleMessage(cMessage *msg) {
                         nextMessage();
                     }
                     return;
-                default:
-                    return;
+                case CommunicationSelfMessages::HEARTBEAT:
+                    if(heartbeat.msgid != MAVLINK_MSG_ID_HEARTBEAT) {
+                        mavlink_heartbeat_t msg;
+                        msg.autopilot = MAV_AUTOPILOT_INVALID;
+                        msg.base_mode = 0;
+                        msg.custom_mode = 0;
+                        msg.mavlink_version = 3;
+                        msg.system_status = 0;
+                        msg.type = MAV_TYPE_GCS;
+
+                        mavlink_msg_heartbeat_encode(systemId, componentId, &heartbeat, &msg);
+                    }
+
+                    int tries;
+                    sendMessage(heartbeat, false, tries, 0);
+
+                    scheduleAt(simTime() + s(1).get(), heartbeatMessage);
             }
         }
     }
     MovingMobilityBase::handleMessage(msg);
+
 }
 
 
@@ -422,11 +451,9 @@ bool MAVLinkMobilityBase::sendMessage(const mavlink_message_t& message, bool sho
             EV_WARN << "Failed to send message" << std::endl;
             if (shouldRetry == true) {
                 currentTries++;
-                continue;
             } else {
                 return false;
             }
-            continue;
         } else {
             EV_INFO << "Message sent: " << message.msgid << std::endl;
             return true;
@@ -467,11 +494,10 @@ void MAVLinkMobilityBase::updatePosition(const mavlink_message_t& msg) {
 }
 
 
-void MAVLinkMobilityBase::receiveTelemetry(mavlink_message_t message) {
+void MAVLinkMobilityBase::receiveTelemetry(mavlink_message_t const& message) {
     Enter_Method_Silent();
 
     EV_DETAIL << "(" << +targetSystem << ") Received MAVLINK: " << message.msgid << std::endl;
-    updatePosition(message);
 
     if(getActiveCondition() && getActiveCondition()(message) && activeInstruction != nullptr && !getActiveCompleted()) {
         activeInstruction->completed = true;
@@ -488,14 +514,13 @@ void MAVLinkMobilityBase::finish() {
     rtScheduler->removeCallback(socketFd, this);
 
 #ifdef _WIN32
+    std::cout << "Socket" << +socketFd << std::endl;
     closesocket(socketFd);
 #else
     close(socketFd);
 #endif
 
     simulatorProcess->kill();
-
-    clearQueue();
 }
 
 }

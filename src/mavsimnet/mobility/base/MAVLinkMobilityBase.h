@@ -28,6 +28,10 @@
 #include "mavsimnet/mobility/base/MAVLinkInstruction.h"
 #include "mavsimnet/utils/VehicleTypes.h"
 
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
+
 using namespace inet;
 
 namespace mavsimnet {
@@ -57,7 +61,7 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler:
     // Callback function called when a message is received from the simulated SITL instance. The default behaviour is to
     // check if the message completes the condition of the active MAVLinkInstruction (if one exists) and to call the next
     // MAVLinkInstruction if the current one is done.
-    virtual void receiveTelemetry(mavlink_message_t message);
+    virtual void receiveTelemetry(mavlink_message_t const& message);
 
     // Performs initial setup on the vehicle. This includes setting update rate and setting home to current position
     virtual void performInitialSetup();
@@ -92,11 +96,18 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler:
 
 
     enum CommunicationSelfMessages {
-        TIMEOUT = 0
+        TIMEOUT,
+        HEARTBEAT
     };
 
   protected:
-    int basePort, socketFd;
+    int basePort;
+#ifdef _WIN32
+    SOCKET socketFd;
+#else
+    int socketFd;
+#endif
+
     char buf[256];
     VehicleType vehicleType;
     RealTimeScheduler *rtScheduler;
@@ -116,6 +127,8 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler:
     int activeInstructionTries = 0;
 
     cMessage *timeoutMessage = new cMessage("MAVLinkMobilityBaseMessage", CommunicationSelfMessages::TIMEOUT);
+    cMessage *heartbeatMessage = new cMessage("MAVLinkMobilityBaseMessage", CommunicationSelfMessages::HEARTBEAT);
+    mavlink_message_t heartbeat;
 };
 
 
