@@ -36,7 +36,6 @@ std::function<bool(mavlink_message_t)> getCheckCmdAck(uint8_t systemId, uint8_t 
             mavlink_command_ack_t ack;
 
             mavlink_msg_command_ack_decode(&message, &ack);
-            //std::cout << +ack.target_system << std::endl;
             return (ack.command == command && ack.result == MAV_RESULT_ACCEPTED && (ack.target_system == systemId || ack.target_system == 0));
         }
         return false;
@@ -169,7 +168,7 @@ std::function<bool(mavlink_message_t)> getCheckGlobalPosition(float lat, float l
 
             inet::GeoCoord currentCoord(inet::deg(position.lat/1e7), inet::deg(position.lon/1e7), inet::m(position.relative_alt / 1e3));
             inet::Coord currentSceneCoords = coordinateSystem->computeSceneCoordinate(currentCoord);
-            std::cout << "Vehicle " << +senderSystemId << " - Current: (" << currentSceneCoords.z << ", " << currentSceneCoords.y << ", " << currentSceneCoords.z << ") - Target: (" << targetCoords.x << ", " << targetCoords.y << ", " << targetCoords.z << ") - Distance: " << coordinateSystem->computeSceneCoordinate(currentCoord).distance(targetCoords) << " Tolerance - " << tolerance << std::endl;
+            // std::cout << "Vehicle " << +senderSystemId << " - Current: (" << currentSceneCoords.z << ", " << currentSceneCoords.y << ", " << currentSceneCoords.z << ") - Target: (" << targetCoords.x << ", " << targetCoords.y << ", " << targetCoords.z << ") - Distance: " << coordinateSystem->computeSceneCoordinate(currentCoord).distance(targetCoords) << " Tolerance - " << tolerance << std::endl;
             return currentSceneCoords.distance(targetCoords) <= tolerance;
         }
         return false;
@@ -187,6 +186,39 @@ std::function<bool(mavlink_message_t)> getCheckParamValue(std::string param_id, 
     };
 }
 
+std::function<bool(mavlink_message_t)> getCheckMode(Mode mode, VehicleType type, uint8_t senderSystemId) {
+    return [=](mavlink_message_t msg) {
+        if(msg.msgid == MAVLINK_MSG_ID_HEARTBEAT && verifySender(msg, senderSystemId)) {
+            mavlink_heartbeat_t heartbeat;
+            mavlink_msg_heartbeat_decode(&msg, &heartbeat);
+            if (mode == GUIDED) {
+                switch(type) {
+                    case COPTER:
+                        return heartbeat.custom_mode == COPTER_MODE_GUIDED;
+                    case PLANE:
+                        return heartbeat.custom_mode == PLANE_MODE_GUIDED;
+                    case ROVER:
+                        return heartbeat.custom_mode == ROVER_MODE_GUIDED;
+                }
+            } else if (mode == AUTO) {
+                switch(type) {
+                    case COPTER:
+                        return heartbeat.custom_mode == COPTER_MODE_AUTO;
+                    case PLANE:
+                        return heartbeat.custom_mode == PLANE_MODE_AUTO;
+                    case ROVER:
+                        return heartbeat.custom_mode == ROVER_MODE_AUTO;
+                }
+            } else if (mode == TAKEOFF) {
+                switch(type) {
+                    case PLANE:
+                        return heartbeat.custom_mode == PLANE_MODE_TAKEOFF;
+                }
+            }
+        }
+        return false;
+    };
+}
 
 }
 }

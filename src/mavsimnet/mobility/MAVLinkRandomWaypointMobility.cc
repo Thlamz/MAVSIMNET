@@ -82,7 +82,7 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     queueInstructions(VehicleRoutines::armTakeoff(systemId, componentId, vehicleType, 50, targetSystem, targetComponent, 5, 20));
 
     // Setting mode to guided, to prepare for random waypoint instructions
-    queueInstructions(VehicleRoutines::setMode(systemId, componentId, vehicleType, VehicleRoutines::GUIDED, targetSystem, targetComponent));
+    queueInstructions(VehicleRoutines::setMode(systemId, componentId, vehicleType, GUIDED, targetSystem, targetComponent));
 
     // Setting vehicle's speed
     cmd = {};
@@ -93,8 +93,13 @@ void MAVLinkRandomWaypointMobility::startMovement() {
     cmd.target_component = targetComponent;
     cmd.target_system = targetSystem;
 
-    mavlink_msg_command_long_encode(targetSystem, targetComponent, &msg, &cmd);
-    queueMessage(msg, TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_CHANGE_SPEED, targetSystem), 15, 3);
+    mavlink_msg_command_long_encode(systemId, componentId, &msg, &cmd);
+    if(vehicleType == ROVER) {
+        // Doesn't check for ack success because this operation always returns failure in rover
+        queueMessage(msg, TelemetryConditions::checkEmpty, 15, 3, "Setting speed message");
+    } else {
+        queueMessage(msg, TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_DO_CHANGE_SPEED, targetSystem), 15, 3, "Setting speed message");
+    }
 
     // Setting the waypoint radius
     // This is only necessary on the Plane vehicle because it tries to loiter around the waypoint instead of flying directly to it
@@ -106,8 +111,8 @@ void MAVLinkRandomWaypointMobility::startMovement() {
             "WP_LOITER_RAD",
             MAV_PARAM_TYPE_INT16
         };
-        mavlink_msg_param_set_encode(targetSystem, targetComponent, &msg, &set_loiter_radius);
-        queueMessage(msg, TelemetryConditions::getCheckParamValue("WP_LOITER_RAD", waypointRadius, targetSystem), 15, 3);
+        mavlink_msg_param_set_encode(systemId, componentId, &msg, &set_loiter_radius);
+        queueMessage(msg, TelemetryConditions::getCheckParamValue("WP_LOITER_RAD", waypointRadius, targetSystem), 15, 3, "Setting loiter radius");
 
         mavlink_param_set_t set_radius = {
             static_cast<float>(waypointRadius),
@@ -116,8 +121,8 @@ void MAVLinkRandomWaypointMobility::startMovement() {
             "WP_RADIUS",
             MAV_PARAM_TYPE_INT16
         };
-        mavlink_msg_param_set_encode(targetSystem, targetComponent, &msg, &set_radius);
-        queueMessage(msg, TelemetryConditions::getCheckParamValue("WP_RADIUS", waypointRadius, targetSystem), 15, 3);
+        mavlink_msg_param_set_encode(systemId, componentId, &msg, &set_radius);
+        queueMessage(msg, TelemetryConditions::getCheckParamValue("WP_RADIUS", waypointRadius, targetSystem), 15, 3, "Setting loiter radius");
     }
 
 }

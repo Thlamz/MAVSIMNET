@@ -146,7 +146,7 @@ std::vector<std::shared_ptr<Instruction>> setModeCopter(uint8_t senderSystem, ui
             mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
-                            TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Seting mode to GUIDED"));
+                            TelemetryConditions::getCheckMode(GUIDED, COPTER, targetSystem), timeout, retries, "Seting mode to GUIDED"));
             break;
         case AUTO:
             cmd.command = MAV_CMD_DO_SET_MODE;
@@ -158,7 +158,7 @@ std::vector<std::shared_ptr<Instruction>> setModeCopter(uint8_t senderSystem, ui
             mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
-                            TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to AUTO"));
+                            TelemetryConditions::getCheckMode(AUTO, COPTER, targetSystem), timeout, retries, "Setting mode to AUTO"));
             break;
         case TAKEOFF:
             break;
@@ -184,7 +184,7 @@ std::vector<std::shared_ptr<Instruction>> setModePlane(uint8_t senderSystem, uin
             mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
-                            TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to GUIDED"));
+                            TelemetryConditions::getCheckMode(GUIDED, PLANE, targetSystem), timeout, retries, "Setting mode to GUIDED"));
             break;
         case AUTO:
             cmd.command = MAV_CMD_DO_SET_MODE;
@@ -196,7 +196,7 @@ std::vector<std::shared_ptr<Instruction>> setModePlane(uint8_t senderSystem, uin
             mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
-                            TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to AUTO"));
+                            TelemetryConditions::getCheckMode(AUTO, PLANE, targetSystem), timeout, retries, "Setting mode to AUTO"));
             break;
         case TAKEOFF:
             cmd.command = MAV_CMD_DO_SET_MODE;
@@ -208,7 +208,7 @@ std::vector<std::shared_ptr<Instruction>> setModePlane(uint8_t senderSystem, uin
             mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
-                            TelemetryConditions::getCheckCmdAck(targetSystem, targetComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to TAKEOFF"));
+                            TelemetryConditions::getCheckMode(TAKEOFF, PLANE, targetSystem), timeout, retries, "Setting mode to TAKEOFF"));
             break;
     }
     return instructions;
@@ -232,7 +232,7 @@ std::vector<std::shared_ptr<Instruction>> setModeRover(uint8_t senderSystem, uin
             mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
-                            TelemetryConditions::getCheckCmdAck(senderSystem, senderComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to GUIDED"));
+                            TelemetryConditions::getCheckMode(GUIDED, ROVER, targetSystem), timeout, retries, "Setting mode to GUIDED"));
             break;
         case AUTO:
             cmd.command = MAV_CMD_DO_SET_MODE;
@@ -244,7 +244,7 @@ std::vector<std::shared_ptr<Instruction>> setModeRover(uint8_t senderSystem, uin
             mavlink_msg_command_long_encode(senderSystem, senderComponent, &msg, &cmd);
             instructions.push_back(
                     std::make_shared<Instruction>(msg,
-                            TelemetryConditions::getCheckCmdAck(senderSystem, senderComponent, MAV_CMD_DO_SET_MODE, targetSystem), timeout, retries, "Setting mode to AUTO"));
+                            TelemetryConditions::getCheckMode(AUTO, ROVER, targetSystem), timeout, retries, "Setting mode to AUTO"));
             break;
     }
     return instructions;

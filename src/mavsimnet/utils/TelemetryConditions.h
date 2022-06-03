@@ -1,6 +1,8 @@
 #include "mavlink/ardupilotmega/mavlink.h"
 #include "inet/common/geometry/common/GeographicCoordinateSystem.h"
 #include <functional>
+#include "VehicleModes.h"
+#include "VehicleTypes.h"
 
 namespace mavsimnet {
 // 
@@ -41,5 +43,8 @@ namespace TelemetryConditions {
 
     // Get a condition that checks if a specific parameter has a desired value
     std::function<bool(mavlink_message_t)> getCheckParamValue(std::string param_id, float param_value, uint8_t senderSystemId);
+
+    // Get a condition that checks if the vehicle is on a specific mode
+    std::function<bool(mavlink_message_t)> getCheckMode(Mode mode, VehicleType type, uint8_t senderSystemId);
 }
 }
