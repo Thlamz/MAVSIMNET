@@ -27,6 +27,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
+
 #define SOCKET_ERROR -1
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR_CODE errno
@@ -151,6 +152,7 @@ void MAVLinkMobilityBase::startSimulator() {
         command += " -M rover -w --defaults " + paramPath;
     }
 
+    command += " --wipe ";
     command += " --base-port ";
     command += std::to_string(basePort + (targetSystem * 10));
     command += " --sysid ";
@@ -162,7 +164,13 @@ void MAVLinkMobilityBase::startSimulator() {
 
     EV_INFO << "Starting simulator with command: " << command << std::endl;
 
-    TinyProcessLib::Process *process = new TinyProcessLib::Process(command, ".");
+    // Executing each instance in it's own directory to avoid conflicts
+    std::stringstream executionPath;
+    executionPath << "./mavsimnet-i" << +targetSystem;
+    // Creating a directory
+    mkdir(executionPath.str().c_str(), 0777);
+
+    TinyProcessLib::Process *process = new TinyProcessLib::Process(command, executionPath.str());
     simulatorProcess = process;
 }
 
