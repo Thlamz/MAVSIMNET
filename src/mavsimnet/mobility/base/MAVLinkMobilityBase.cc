@@ -169,7 +169,7 @@ void MAVLinkMobilityBase::startSimulator() {
     // Executing each instance in it's own directory to avoid conflicts
 #ifdef _WIN32
     // Creating a temporary directory
-    _mkdir(executionPath.str().c_str());
+    _mkdir(executionPath.c_str());
 #else
     // Creating a temporary directory
     mkdir(executionPath.c_str(), 0777);
