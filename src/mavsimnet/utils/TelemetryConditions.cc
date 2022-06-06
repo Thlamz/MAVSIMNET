@@ -33,7 +33,7 @@ bool checkEmpty(mavlink_message_t) {
 std::function<bool(mavlink_message_t)> getCheckCmdAck(uint8_t systemId, uint8_t componentId, unsigned short command, uint8_t senderSystemId) {
     return [=](mavlink_message_t message) {
         if(message.msgid == MAVLINK_MSG_ID_COMMAND_ACK && verifySender(message, senderSystemId)) {
-            mavlink_command_ack_t ack;
+            mavlink_command_ack_t ack = {};
 
             mavlink_msg_command_ack_decode(&message, &ack);
             return (ack.command == command && ack.result == MAV_RESULT_ACCEPTED && (ack.target_system == systemId || ack.target_system == 0));
@@ -60,7 +60,7 @@ std::function<bool(mavlink_message_t)> getCheckPreArm(uint8_t senderSystemId) {
                 ESTIMATOR_ACCEL_ERROR);
     return [=](mavlink_message_t message) {
         if(message.msgid == MAVLINK_MSG_ID_EKF_STATUS_REPORT && verifySender(message, senderSystemId)) {
-            mavlink_ekf_status_report_t report;
+            mavlink_ekf_status_report_t report = {};
             mavlink_msg_ekf_status_report_decode(&message, &report);
             // Flags don't include error bits and include all required values
             return !(report.flags & error_bits) && ((report.flags & required_value) == required_value);
@@ -79,7 +79,7 @@ std::function<bool(mavlink_message_t)> getCheckPreArm(uint8_t senderSystemId) {
 std::function<bool(mavlink_message_t)> getCheckArm(uint8_t senderSystemId) {
     return [=](mavlink_message_t message) {
         if(message.msgid == MAVLINK_MSG_ID_HEARTBEAT && verifySender(message, senderSystemId)) {
-            mavlink_heartbeat_t heartbeat;
+            mavlink_heartbeat_t heartbeat = {};
             mavlink_msg_heartbeat_decode(&message, &heartbeat);
             return static_cast<bool>(heartbeat.base_mode & MAV_MODE_FLAG_SAFETY_ARMED);
         }
@@ -97,7 +97,7 @@ std::function<bool(mavlink_message_t)> getCheckArm(uint8_t senderSystemId) {
 std::function<bool(mavlink_message_t)> getCheckAltitude(int32_t altitude, int32_t tolerance, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT && verifySender(msg, senderSystemId)) {
-            mavlink_global_position_int_t position;
+            mavlink_global_position_int_t position = {};
             mavlink_msg_global_position_int_decode(&msg, &position);
             return abs(position.relative_alt / 1000 - altitude) < tolerance;
         }
@@ -112,12 +112,12 @@ std::function<bool(mavlink_message_t)> getCheckAltitude(int32_t altitude, int32_
 std::function<bool(mavlink_message_t)> getCheckMissionRequest(uint8_t systemId, uint8_t componentId, uint16_t sequenceNumber, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_MISSION_REQUEST_INT && verifySender(msg, senderSystemId)) {
-            mavlink_mission_request_int_t request;
+            mavlink_mission_request_int_t request = {};
             mavlink_msg_mission_request_int_decode(&msg, &request);
             return (request.seq == sequenceNumber) && (request.target_system == systemId) && (request.target_component == componentId);
         }
         else if(msg.msgid == MAVLINK_MSG_ID_MISSION_REQUEST && verifySender(msg, senderSystemId)) {
-            mavlink_mission_request_t request;
+            mavlink_mission_request_t request = {};
             mavlink_msg_mission_request_decode(&msg, &request);
             return (request.seq == sequenceNumber) && (request.target_system == systemId || request.target_system == 0);
         }
@@ -128,7 +128,7 @@ std::function<bool(mavlink_message_t)> getCheckMissionRequest(uint8_t systemId, 
 std::function<bool(mavlink_message_t)> getCheckMissionAck(uint8_t systemId, uint8_t componentId, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_MISSION_ACK && verifySender(msg, senderSystemId)) {
-                mavlink_mission_ack_t ack;
+                mavlink_mission_ack_t ack = {};
                 mavlink_msg_mission_ack_decode(&msg, &ack);
                 return (ack.type == MAV_MISSION_ACCEPTED) && (ack.target_system == systemId || ack.target_system == 0) ;
         }
@@ -139,7 +139,7 @@ std::function<bool(mavlink_message_t)> getCheckMissionAck(uint8_t systemId, uint
 std::function<bool(mavlink_message_t)> getCheckMissionItemReached(uint16_t seq, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_MISSION_ITEM_REACHED && verifySender(msg, senderSystemId)) {
-            mavlink_mission_item_reached_t reached;
+            mavlink_mission_item_reached_t reached = {};
             mavlink_msg_mission_item_reached_decode(&msg, &reached);
             return reached.seq == seq;
         }
@@ -150,7 +150,7 @@ std::function<bool(mavlink_message_t)> getCheckMissionItemReached(uint16_t seq, 
 std::function<bool(mavlink_message_t)> getCheckTargetGlobal(float lat, float lon, float alt, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT && verifySender(msg, senderSystemId)) {
-            mavlink_position_target_global_int_t position;
+            mavlink_position_target_global_int_t position = {};
             mavlink_msg_position_target_global_int_decode(&msg, &position);
 
             return (position.lat_int == lat) && (position.lon_int == lon) && (position.alt = alt);
@@ -163,7 +163,7 @@ std::function<bool(mavlink_message_t)> getCheckGlobalPosition(float lat, float l
     inet::Coord targetCoords = coordinateSystem->computeSceneCoordinate(inet::GeoCoord(inet::deg(lat), inet::deg(lon), inet::m(alt)));
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT && verifySender(msg, senderSystemId)) {
-            mavlink_global_position_int_t position;
+            mavlink_global_position_int_t position = {};
             mavlink_msg_global_position_int_decode(&msg,&position);
 
             inet::GeoCoord currentCoord(inet::deg(position.lat/1e7), inet::deg(position.lon/1e7), inet::m(position.relative_alt / 1e3));
@@ -178,7 +178,7 @@ std::function<bool(mavlink_message_t)> getCheckGlobalPosition(float lat, float l
 std::function<bool(mavlink_message_t)> getCheckParamValue(std::string param_id, float param_value, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_PARAM_VALUE && verifySender(msg, senderSystemId)) {
-            mavlink_param_value_t param;
+            mavlink_param_value_t param = {};
             mavlink_msg_param_value_decode(&msg, &param);
             return (strcmp(param.param_id, param_id.c_str()) == 0) && (param.param_value == param_value);
         }
@@ -189,7 +189,7 @@ std::function<bool(mavlink_message_t)> getCheckParamValue(std::string param_id, 
 std::function<bool(mavlink_message_t)> getCheckMode(Mode mode, VehicleType type, uint8_t senderSystemId) {
     return [=](mavlink_message_t msg) {
         if(msg.msgid == MAVLINK_MSG_ID_HEARTBEAT && verifySender(msg, senderSystemId)) {
-            mavlink_heartbeat_t heartbeat;
+            mavlink_heartbeat_t heartbeat = {};
             mavlink_msg_heartbeat_decode(&msg, &heartbeat);
             if (mode == GUIDED) {
                 switch(type) {

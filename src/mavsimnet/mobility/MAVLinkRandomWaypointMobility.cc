@@ -53,13 +53,13 @@ void MAVLinkRandomWaypointMobility::setTargetPosition(){
             geoCoords.latitude.get() << "," << geoCoords.longitude.get() << "," << geoCoords.altitude.get() << ")" << std::endl;
 
     if(vehicleType == PLANE) {
-        // Using a tolerance of triple the radius to account for imprecision in the vehicle's movement
-        queueInstructions(VehicleRoutines::guidedGoto(vehicleType, geoCoords.latitude.get(), geoCoords.longitude.get(), geoCoords.altitude.get(), waypointRadius * 3,
-                coordinateSystem, targetSystem, targetComponent, -1, 1));
+        // Using a higher tolerance to account for imprecision in the plane's movement
+        queueInstructions(VehicleRoutines::guidedGoto(vehicleType, geoCoords.latitude.get(), geoCoords.longitude.get(), geoCoords.altitude.get(), waypointRadius * 5,
+                coordinateSystem, targetSystem, targetComponent, 10, 20));
     } else {
         // Using a tolerance of triple the radius to account for imprecision in the vehicle's movement
         queueInstructions(VehicleRoutines::guidedGoto(vehicleType, geoCoords.latitude.get(), geoCoords.longitude.get(), geoCoords.altitude.get(), waypointRadius,
-                coordinateSystem, targetSystem, targetComponent, -1, 1));
+                coordinateSystem, targetSystem, targetComponent, 10, 20));
     }
 }
 
@@ -75,8 +75,8 @@ void MAVLinkRandomWaypointMobility::move() {
 }
 
 void MAVLinkRandomWaypointMobility::startMovement() {
-    mavlink_command_long_t cmd;
-    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+    mavlink_message_t msg = {};
     
     // Commanding the vehicle to takeoff
     queueInstructions(VehicleRoutines::armTakeoff(systemId, componentId, vehicleType, 50, targetSystem, targetComponent, 5, 20));

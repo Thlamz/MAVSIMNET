@@ -58,6 +58,8 @@ void MAVLinkMobilityBase::initialize(int stage)
         copterSimulatorPath = par("copterSimulatorPath").stdstringValue();
         planeSimulatorPath = par("planeSimulatorPath").stdstringValue();
         roverSimulatorPath = par("roverSimulatorPath").stdstringValue();
+        executionPath = "mavsimnet-i";
+        executionPath += std::to_string(+targetSystem);
         startSimulator();
         openSocket();
         performInitialSetup();
@@ -102,7 +104,7 @@ void MAVLinkMobilityBase::waitUntilReady() {
             // This message is used to determine if a vehicle is ready to arm. It is also sent by
             // performInitialSetup but in that function it is queued, and the queue won't proceed
             // until the simulation is started, which only happens after this function returns.
-            mavlink_message_t message;
+            mavlink_message_t message = {};
             mavlink_command_long_t cmd = {};
             cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
             cmd.confirmation = 0;
@@ -116,8 +118,8 @@ void MAVLinkMobilityBase::waitUntilReady() {
             sendMessage(message, true, retries, 10);
             std::cout << "Forcefully setting interval for EKF status reports" << std::endl;
         }
-        mavlink_status_t status;
-        mavlink_message_t msg;
+        mavlink_status_t status = {};
+        mavlink_message_t msg = {};
 
         for (int i = 0; i < length; ++i)
         {
@@ -165,12 +167,14 @@ void MAVLinkMobilityBase::startSimulator() {
     EV_INFO << "Starting simulator with command: " << command << std::endl;
 
     // Executing each instance in it's own directory to avoid conflicts
-    std::stringstream executionPath;
-    executionPath << "./mavsimnet-i" << +targetSystem;
-    // Creating a directory
-    mkdir(executionPath.str().c_str(), 0777);
-
-    TinyProcessLib::Process *process = new TinyProcessLib::Process(command, executionPath.str());
+#ifdef _WIN32
+    // Creating a temporary directory
+    _mkdir(executionPath.str().c_str());
+#else
+    // Creating a temporary directory
+    mkdir(executionPath.c_str(), 0777);
+#endif
+    TinyProcessLib::Process *process = new TinyProcessLib::Process(command, executionPath);
     simulatorProcess = process;
 }
 
@@ -267,8 +271,8 @@ bool MAVLinkMobilityBase::notify(int incoming) {
             }
             EV_DETAIL << "Received " << length << " bytes." << std::endl;
 
-            mavlink_status_t status;
-            mavlink_message_t msg;
+            mavlink_status_t status = {};
+            mavlink_message_t msg = {};
 
             for (int i = 0; i < length; ++i)
             {
@@ -306,7 +310,7 @@ void MAVLinkMobilityBase::handleMessage(cMessage *msg) {
                     return;
                 case CommunicationSelfMessages::HEARTBEAT:
                     if(heartbeat.msgid != MAVLINK_MSG_ID_HEARTBEAT) {
-                        mavlink_heartbeat_t msg;
+                        mavlink_heartbeat_t msg = {};
                         msg.autopilot = MAV_AUTOPILOT_INVALID;
                         msg.base_mode = 0;
                         msg.custom_mode = 0;
@@ -331,7 +335,7 @@ void MAVLinkMobilityBase::handleMessage(cMessage *msg) {
 
 
 void MAVLinkMobilityBase::performInitialSetup() {
-    mavlink_command_long_t cmd;
+    mavlink_command_long_t cmd = {};
     cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
     cmd.confirmation = 0;
     cmd.param1 = MAVLINK_MSG_ID_GLOBAL_POSITION_INT;
@@ -340,7 +344,7 @@ void MAVLinkMobilityBase::performInitialSetup() {
     cmd.target_component = targetComponent;
     cmd.target_system = targetSystem;
 
-    mavlink_message_t message;
+    mavlink_message_t message = {};
     mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
     queueMessage(message,
             TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem),
@@ -468,7 +472,7 @@ bool MAVLinkMobilityBase::sendMessage(const mavlink_message_t& message, bool sho
 
 
         if(::send(socketFd, buf, length, 0) == SOCKET_ERROR) {
-            EV_WARN << "Failed to send message" << std::endl;
+            EV_WARN << "Failed to send message: " << SOCKET_ERROR_CODE << std::endl;
             if (shouldRetry == true) {
                 currentTries++;
             } else {
@@ -496,7 +500,7 @@ void MAVLinkMobilityBase::orient() {
 void MAVLinkMobilityBase::updatePosition(const mavlink_message_t& msg) {
     // Updating vehicle position
     if(msg.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT) {
-        mavlink_global_position_int_t position;
+        mavlink_global_position_int_t position = {};
         mavlink_msg_global_position_int_decode(&msg, &position);
 
         currentPosition = coordinateSystem->computeSceneCoordinate(GeoCoord(deg(((double)position.lat)/1e7),
@@ -506,7 +510,7 @@ void MAVLinkMobilityBase::updatePosition(const mavlink_message_t& msg) {
 
     // Update vehicle orientation
     if(msg.msgid == MAVLINK_MSG_ID_ATTITUDE) {
-        mavlink_attitude_t attitude;
+        mavlink_attitude_t attitude = {};
         mavlink_msg_attitude_decode(&msg, &attitude);
 
         currentOrientation = Quaternion(EulerAngles(rad(M_PI - attitude.yaw), rad(-attitude.roll), rad(-attitude.pitch)));
@@ -539,12 +543,23 @@ void MAVLinkMobilityBase::finish() {
 #else
     close(socketFd);
 #endif
-
     simulatorProcess->kill();
+
+#ifdef _WIN32
+    system((std::string("rd /s /q \"" ) + executionPath + "\"").c_str());
+#else
+    system((std::string("rm -rf " ) + executionPath).c_str());
+#endif
 }
 
 MAVLinkMobilityBase::~MAVLinkMobilityBase() {
     simulatorProcess->kill();
+
+#ifdef _WIN32
+    system((std::string("rd /s /q \"" ) + executionPath + "\"").c_str());
+#else
+    system((std::string("rm -rf " ) + executionPath).c_str());
+#endif
 }
 
 }

@@ -121,6 +121,8 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler:
     std::string copterSimulatorPath;
     std::string planeSimulatorPath;
     std::string roverSimulatorPath;
+
+    std::string executionPath;
   private:
     std::queue<std::shared_ptr<Instruction>> instructionQueue;
 
@@ -129,7 +131,7 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler:
 
     cMessage *timeoutMessage = new cMessage("MAVLinkMobilityBaseMessage", CommunicationSelfMessages::TIMEOUT);
     cMessage *heartbeatMessage = new cMessage("MAVLinkMobilityBaseMessage", CommunicationSelfMessages::HEARTBEAT);
-    mavlink_message_t heartbeat;
+    mavlink_message_t heartbeat = {};
 };
 
 

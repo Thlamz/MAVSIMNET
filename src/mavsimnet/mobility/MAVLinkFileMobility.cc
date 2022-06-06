@@ -37,7 +37,7 @@ void MAVLinkFileMobility::initialize(int stage)
 }
 
 mavlink_command_long_t MAVLinkFileMobility::vectorToCommand(std::vector<std::string> &vector) {
-    mavlink_command_long_t command;
+    mavlink_command_long_t command = {};
     command.param1 = std::stod(vector[4]);
     command.param2 = std::stod(vector[5]);
     command.param3 = std::stod(vector[6]);
@@ -76,22 +76,22 @@ void MAVLinkFileMobility::readMissionFromFile() {
         lines.push_back(copyVector);
     }
 
-    mavlink_mission_count_t missionRequest;
+    mavlink_mission_count_t missionRequest = {};
     missionRequest.count = commands.size();
     missionRequest.target_system = targetSystem;
     missionRequest.target_component = targetComponent;
     missionRequest.mission_type = MAV_MISSION_TYPE_MISSION;
 
-    mavlink_message_t missionRequestMessage;
+    mavlink_message_t missionRequestMessage = {};
     mavlink_msg_mission_count_encode(systemId, componentId, &missionRequestMessage, &missionRequest);
     queueMessage(missionRequestMessage, TelemetryConditions::getCheckMissionRequest(systemId, componentId, 0, targetSystem), 15, 3);
 
-    mavlink_mission_item_int_t missionItem;
+    mavlink_mission_item_int_t missionItem = {};
     missionItem.target_system = targetSystem;
     missionItem.target_component = targetComponent;
     missionItem.mission_type = MAV_MISSION_TYPE_MISSION;
 
-    mavlink_message_t commandMessage;
+    mavlink_message_t commandMessage = {};
     uint16_t index = 0;
     for(mavlink_command_long_t &command : commands) {
         missionItem.param1 = command.param1;
@@ -120,8 +120,8 @@ void MAVLinkFileMobility::readMissionFromFile() {
 
 
 void MAVLinkFileMobility::startMission() {
-    mavlink_command_long_t cmd;
-    mavlink_message_t message;
+    mavlink_command_long_t cmd = {};
+    mavlink_message_t message = {};
 
     // Sending MODE GUIDED command
     queueInstructions(VehicleRoutines::setMode(systemId, componentId, vehicleType, GUIDED, targetSystem, targetComponent));

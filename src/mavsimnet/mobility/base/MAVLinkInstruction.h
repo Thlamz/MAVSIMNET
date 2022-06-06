@@ -24,7 +24,7 @@ typedef std::function<bool(mavlink_message_t)> Condition;
 struct Instruction {
     Instruction(mavlink_message_t message, Condition condition, omnetpp::simtime_t timeout, int retries, std::string label = "",bool completed=false) : message(message), condition(condition), timeout(timeout), retries(retries), label(label), completed(completed) {};
     // Message to send to the vehicle
-    mavlink_message_t message;
+    mavlink_message_t message = {};
     // This is a function that will be called with every telemetry message received while this instruction is active. The next
     // instruction in the queue will only be called when this function returns true. This allows you to implement conditions
     // that should be satisfied before considering this instruction as completed.

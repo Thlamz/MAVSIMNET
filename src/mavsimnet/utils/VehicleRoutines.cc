@@ -18,8 +18,8 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffCopter(uint8_t senderSystem,
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
 
-    mavlink_command_long_t cmd;
-    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+    mavlink_message_t msg = {};
 
     cmd.command = MAV_CMD_DO_SET_MODE;
     cmd.confirmation = 0;
@@ -59,8 +59,8 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffPlane(uint8_t senderSystem, 
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
 
-    mavlink_command_long_t cmd;
-    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+    mavlink_message_t msg = {};
 
     mavlink_param_set_t set_altitude { altitude, targetSystem, targetComponent, "TKOFF_ALT", MAV_PARAM_TYPE_REAL32 };
     mavlink_msg_param_set_encode(senderSystem, senderComponent, &msg, &set_altitude);
@@ -87,8 +87,8 @@ std::vector<std::shared_ptr<Instruction>> armTakeoffRover(uint8_t senderSystem, 
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
 
-    mavlink_command_long_t cmd;
-    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+    mavlink_message_t msg = {};
 
     cmd.command = MAV_CMD_DO_SET_MODE;
     cmd.confirmation = 0;
@@ -132,8 +132,8 @@ std::vector<std::shared_ptr<Instruction>> setModeCopter(uint8_t senderSystem, ui
         int retries)
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
-    mavlink_command_long_t cmd;
-    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+    mavlink_message_t msg = {};
     switch (mode) {
         case GUIDED:
             cmd.command = MAV_CMD_DO_SET_MODE;
@@ -170,8 +170,8 @@ std::vector<std::shared_ptr<Instruction>> setModePlane(uint8_t senderSystem, uin
         int retries)
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
-    mavlink_command_long_t cmd;
-    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+    mavlink_message_t msg = {};
     switch (mode) {
         case GUIDED:
             cmd.command = MAV_CMD_DO_SET_MODE;
@@ -218,8 +218,8 @@ std::vector<std::shared_ptr<Instruction>> setModeRover(uint8_t senderSystem, uin
         int retries)
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
-    mavlink_command_long_t cmd;
-    mavlink_message_t msg;
+    mavlink_command_long_t cmd = {};
+    mavlink_message_t msg = {};
     switch (mode) {
         case GUIDED:
             cmd.command = MAV_CMD_DO_SET_MODE;
@@ -271,7 +271,7 @@ std::vector<std::shared_ptr<Instruction>> guidedGotoCopter(double latitude, doub
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
 
-    mavlink_set_position_target_global_int_t position_command;
+    mavlink_set_position_target_global_int_t position_command = {};
     position_command.lat_int = latitude * (1e7);
     position_command.lon_int = longitude * (1e7);
     position_command.alt = altitude;
@@ -282,7 +282,7 @@ std::vector<std::shared_ptr<Instruction>> guidedGotoCopter(double latitude, doub
     position_command.target_system = targetSystem;
     position_command.target_component = targetComponent;
 
-    mavlink_message_t msg;
+    mavlink_message_t msg = {};
     mavlink_msg_set_position_target_global_int_encode(targetSystem, targetComponent, &msg, &position_command);
     instructions.push_back(
             std::make_shared<Instruction>(msg,
@@ -299,7 +299,7 @@ std::vector<std::shared_ptr<Instruction>> guidedGotoPlane(double latitude, doubl
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
 
-    mavlink_mission_item_t missionItem;
+    mavlink_mission_item_t missionItem = {};
     missionItem.target_system = targetSystem;
     missionItem.target_component = targetComponent;
     missionItem.x = latitude;
@@ -310,7 +310,7 @@ std::vector<std::shared_ptr<Instruction>> guidedGotoPlane(double latitude, doubl
     missionItem.current = 2; // Current 2 to indicate goto command
     missionItem.autocontinue = 1;
 
-    mavlink_message_t msg;
+    mavlink_message_t msg = {};
     mavlink_msg_mission_item_encode(targetSystem, targetComponent, &msg, &missionItem);
 
     instructions.push_back(
@@ -327,7 +327,7 @@ std::vector<std::shared_ptr<Instruction>> guidedGotoRover(double latitude, doubl
 {
     std::vector<std::shared_ptr<Instruction>> instructions;
 
-    mavlink_set_position_target_global_int_t position_command;
+    mavlink_set_position_target_global_int_t position_command = {};
     position_command.lat_int = latitude * (1e7);
     position_command.lon_int = longitude * (1e7);
     position_command.alt = 0;
@@ -338,7 +338,7 @@ std::vector<std::shared_ptr<Instruction>> guidedGotoRover(double latitude, doubl
     position_command.target_system = targetSystem;
     position_command.target_component = targetComponent;
 
-    mavlink_message_t msg;
+    mavlink_message_t msg = {};
     mavlink_msg_set_position_target_global_int_encode(targetSystem, targetComponent, &msg, &position_command);
     instructions.push_back(
             std::make_shared<Instruction>(msg,
