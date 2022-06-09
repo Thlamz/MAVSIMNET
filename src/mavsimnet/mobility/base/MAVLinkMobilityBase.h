@@ -98,7 +98,8 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler:
 
     enum CommunicationSelfMessages {
         TIMEOUT,
-        HEARTBEAT
+        HEARTBEAT,
+        UPDATE
     };
 
   protected:
@@ -131,6 +132,7 @@ class MAVLinkMobilityBase : public MovingMobilityBase, public RealTimeScheduler:
 
     cMessage *timeoutMessage = new cMessage("MAVLinkMobilityBaseMessage", CommunicationSelfMessages::TIMEOUT);
     cMessage *heartbeatMessage = new cMessage("MAVLinkMobilityBaseMessage", CommunicationSelfMessages::HEARTBEAT);
+    cMessage *updateMessage = new cMessage("MAVLinkMobilityBaseMessage", CommunicationSelfMessages::UPDATE);
     mavlink_message_t heartbeat = {};
 };
 

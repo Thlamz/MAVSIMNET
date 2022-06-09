@@ -42,15 +42,25 @@ namespace mavsimnet {
 
 Define_Module(MAVLinkMobilityBase);
 
+static int lastId = 1;
+
 void MAVLinkMobilityBase::initialize(int stage)
 {
     MovingMobilityBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        targetSystem = (par("targetSystem").intValue() == -1) ? getId() : par("targetSystem");
+        targetSystem = (par("targetSystem").intValue() == -1) ? lastId++ : par("targetSystem");
         targetComponent = par("targetComponent");
         vehicleType = static_cast<VehicleType>(par("vehicleType").intValue());
         coordinateSystem = getModuleFromPar<IGeographicCoordinateSystem>(par("coordinateSystemModule"), this, true);
-        rtScheduler = check_and_cast<inet::RealTimeScheduler *>(getSimulation()->getScheduler());
+
+        rtScheduler = dynamic_cast<inet::RealTimeScheduler *>(getSimulation()->getScheduler());
+
+        if(rtScheduler == nullptr) {
+            EV_ERROR << "The scheduler module is not inet::RealTimeScheduler. This means that the simulation will have no "
+                    "guarantee of synchronicity. You will be responsible for keeping the simulation time at a rate of 1/1 to"
+                    "real time. To do this the playback speed should be \"1 / mobility animation speed\"." << std::endl;
+        }
+
         basePort = par("basePort");
         systemId = par("systemId");
         componentId = par("componentId");
@@ -247,7 +257,12 @@ void MAVLinkMobilityBase::openSocket()
     #endif
     EV_INFO << "Socket set to non-blocking" << std::endl;
 
-    rtScheduler->addCallback(fd, this);
+    // If the simulation has a RealTimeScheduler than uses it
+    // to handle socket consumption, otherwise this will happen
+    // in the HEARTBEAT event
+    if(rtScheduler != nullptr) {
+        rtScheduler->addCallback(fd, this);
+    }
 }
 
 
@@ -479,7 +494,7 @@ bool MAVLinkMobilityBase::sendMessage(const mavlink_message_t& message, bool sho
                 return false;
             }
         } else {
-            EV_INFO << "Message sent: " << message.msgid << std::endl;
+            EV_DEBUG << "Message sent: " << message.msgid << std::endl;
             return true;
         }
     } while(currentTries < maxRetries);
@@ -488,6 +503,12 @@ bool MAVLinkMobilityBase::sendMessage(const mavlink_message_t& message, bool sho
 }
 
 void MAVLinkMobilityBase::move() {
+    // If the RealTimeScheduler is not used, notifies for socket consumption
+    // on the move event
+    if(rtScheduler == nullptr) {
+        notify(socketFd);
+    }
+
     lastVelocity = (currentPosition - lastPosition) * (1/(simTime() - lastUpdate));
     lastPosition = currentPosition;
 }
@@ -535,10 +556,11 @@ void MAVLinkMobilityBase::finish() {
     MovingMobilityBase::finish();
     cancelAndDelete(timeoutMessage);
 
-    rtScheduler->removeCallback(socketFd, this);
+    if(rtScheduler != nullptr) {
+        rtScheduler->removeCallback(socketFd, this);
+    }
 
 #ifdef _WIN32
-    std::cout << "Socket" << +socketFd << std::endl;
     closesocket(socketFd);
 #else
     close(socketFd);

@@ -29,6 +29,11 @@ import inet.mobility.base.MovingMobilityBase;
 // required to translate geographical coordinates to scene coordinates. By default the coordinateSystemModule is set to "coordinateSystem"
 // so all you need to do is include a IGeographicCoordinateSystem module in your simulation. The showcase simulations are already set
 // up with a module like this.
+// 
+// This module works best paired with the inet::RealTimeScheduler. It will guarantee that OMNeT is syncronized with the SITL instances
+// are syncronized with OMNeT as both simulations will run at real time. You can use this module without using the real time scheduler
+// but the synchronicity guarantee will be off. If you want to run the simulation at aproximately real time you should set the playback
+// time to "1 / mobility animation speed". **If you are observing errors related to simulation time you should try removing inet::RealTimeScheduler**
 simple MAVLinkMobilityBase extends MovingMobilityBase
 {
     // TODO: Add support for simulating real vehicles
@@ -48,7 +53,7 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
         // systemId of this vehicle instance. This is a unique identifier of the simulated vehicle instance. 
         // You should take care not to repeat this ID if your simulation contains more than on MAVLinkMobility
         // vehicle.
-        // By default will use -1, which sets the targetSystem to the ID of the module. Be careful as this might
+        // By default will use -1, which sets the targetSystem to a unique ID. Be careful as this might
         // conflict with other module's custom targetSystems.
         int targetSystem = default(-1);
         // componentId of this vehicle instance. Generally can be left as is.
@@ -66,10 +71,10 @@ simple MAVLinkMobilityBase extends MovingMobilityBase
         string paramPath;
         
         // Base port for the SITL simulators.
-        // The actual PORT the simulators will be run is basePort + (systemId * 10) where 
-        // systemId is the system ID of the vehicle being simulated.
+        // The actual PORT the simulators will be run is basePort + (targetSystem * 10) where 
+        // targetSystem is the ID of the vehicle being simulated.
         // If you don't want port comflicts set the same value for ALL MAVLink mobility modules and use 
-        // different systemIds for each of them. Or don't set basePort or targetSystem at all, the modules 
+        // different targetSystem for each of them. Or don't set basePort or targetSystem at all, the modules 
         //will automatically figura out ports that don't cause conflict.
         int basePort = default(5505);
         
