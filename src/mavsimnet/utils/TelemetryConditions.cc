@@ -34,7 +34,6 @@ std::function<bool(mavlink_message_t)> getCheckCmdAck(uint8_t systemId, uint8_t 
     return [=](mavlink_message_t message) {
         if(message.msgid == MAVLINK_MSG_ID_COMMAND_ACK && verifySender(message, senderSystemId)) {
             mavlink_command_ack_t ack = {};
-
             mavlink_msg_command_ack_decode(&message, &ack);
             return (ack.command == command && ack.result == MAV_RESULT_ACCEPTED && (ack.target_system == systemId || ack.target_system == 0));
         }

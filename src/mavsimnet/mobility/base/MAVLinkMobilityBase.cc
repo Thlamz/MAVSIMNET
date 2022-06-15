@@ -74,9 +74,10 @@ void MAVLinkMobilityBase::initialize(int stage)
         openSocket();
         performInitialSetup();
 
+
         scheduleAt(simTime() + s(1).get(), heartbeatMessage);
     }
-    if (stage == 2) {
+    if (stage == 1) {
         if(par("waitUntilReady")) {
             waitUntilReady();
         }
@@ -87,9 +88,23 @@ void MAVLinkMobilityBase::initialize(int stage)
 void MAVLinkMobilityBase::waitUntilReady() {
     int length;
 
-    // Condition that verifies if the necessary interval has been set
-    bool intervalSet = false;
-    Condition intervalAcknowledge = TelemetryConditions::getCheckCmdAck(systemId, componentId, MAV_CMD_SET_MESSAGE_INTERVAL, targetSystem);
+    // Prematurely and forcefully sending the message rate for the EKF_STATUS_REPORT message.
+    // This message is used to determine if a vehicle is ready to arm. It is also sent by
+    // performInitialSetup but in that function it is queued, and the queue won't proceed
+    // until the simulation is started, which only happens after this function returns.
+    mavlink_message_t message = {};
+    mavlink_command_long_t cmd = {};
+    cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+    cmd.confirmation = 0;
+    cmd.param1 = MAVLINK_MSG_ID_EKF_STATUS_REPORT;
+    cmd.param2 = 2000000; // 0.5 Hz
+    cmd.param7 = 0;
+    cmd.target_component = targetComponent;
+    cmd.target_system = targetSystem;
+    mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
+    int retries = 0;
+    sendMessage(message, false, retries, 1);
+    std::cout << "(" << +targetSystem << ") Forcefully setting interval for EKF status reports" << std::endl;
 
     Condition preReadyCondition = TelemetryConditions::getCheckPreArm(targetSystem);
     EV_INFO << "Waiting until simulator is ready" << std::endl;
@@ -99,35 +114,15 @@ void MAVLinkMobilityBase::waitUntilReady() {
             // Blocking errors are normal when no messages are present in a non-blocking socket
             if(error == SOCKET_EMPTY_ERROR) {
                 // Sleeps to save on processing power while waiting
-                std::cout << "No messages in socket, sleeping..." << std::endl;
+                std::cout << "(" << +targetSystem << ") No messages in socket, sleeping..." << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 continue;
             }
 
-            std::cout << "Error receiving message, code: " << error << std::endl;
+            std::cout << "(" << +targetSystem << ") Error receiving message, code: " << error << std::endl;
             return;
         }
 
-        // Only sent if not already acknowledged
-        if (!intervalSet) {
-            // Prematurely and forcefully sending the message rate for the EKF_STATUS_REPORT message.
-            // This message is used to determine if a vehicle is ready to arm. It is also sent by
-            // performInitialSetup but in that function it is queued, and the queue won't proceed
-            // until the simulation is started, which only happens after this function returns.
-            mavlink_message_t message = {};
-            mavlink_command_long_t cmd = {};
-            cmd.command = MAV_CMD_SET_MESSAGE_INTERVAL;
-            cmd.confirmation = 0;
-            cmd.param1 = MAVLINK_MSG_ID_EKF_STATUS_REPORT;
-            cmd.param2 = 2000000; // 0.5 Hz
-            cmd.param7 = 0;
-            cmd.target_component = targetComponent;
-            cmd.target_system = targetSystem;
-            mavlink_msg_command_long_encode(systemId, componentId, &message, &cmd);
-            int retries = 0;
-            sendMessage(message, true, retries, 10);
-            std::cout << "Forcefully setting interval for EKF status reports" << std::endl;
-        }
         mavlink_status_t status = {};
         mavlink_message_t msg = {};
 
@@ -135,9 +130,7 @@ void MAVLinkMobilityBase::waitUntilReady() {
         {
             if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status))
             {
-                std::cout << "Received message id " << +msg.msgid << " while waiting until simulator is ready" << std::endl;
-                // Checking for the aknowledgement of the interval message
-                intervalSet = intervalSet || intervalAcknowledge(msg);
+                std::cout << "(" << +targetSystem << ") Received message id " << +msg.msgid << " while waiting until simulator is ready" << std::endl;
                 if(preReadyCondition(msg)) {
                     EV_INFO << "Vehicle ready to arm" << std::endl;
                     return;
