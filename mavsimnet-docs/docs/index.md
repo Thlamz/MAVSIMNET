@@ -1,4 +1,7 @@
 # Getting Started
+
+![MAVSIMNET architecture diagram](../assets/architexture-diagram-v3-english.drawio.png)
+
 ## About
 
 MAVSIMNET is a simulation framework for the OMNeT++ discrete event simulator based on Ardupilot's Software In The Loop (SITL) simulator. It allows you to enrich OMNeT++ and INET's simulations with realistic mobility models for the mobile nodes in your network. 
