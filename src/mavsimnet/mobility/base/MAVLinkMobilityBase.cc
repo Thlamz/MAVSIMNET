@@ -548,6 +548,8 @@ void MAVLinkMobilityBase::receiveTelemetry(mavlink_message_t const& message) {
 void MAVLinkMobilityBase::finish() {
     MovingMobilityBase::finish();
     cancelAndDelete(timeoutMessage);
+    cancelAndDelete(heartbeatMessage);
+    cancelAndDelete(updateMessage);
 
     if(rtScheduler != nullptr) {
         rtScheduler->removeCallback(socketFd, this);

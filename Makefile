@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for MAVSIMNET
 #
 # This file was generated with the command:
-#  opp_makemake --nolink -f --deep -O out -KINET_PROJ=/Users/josefkamysek/Documents/Coding/Gradys/opp_env_install/inet-4.5.0 -DINET_IMPORT -I. -I$$\(INET_PROJ\)/src -L$$\(INET_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lINET$$\(D\) -d src -X.
+#  opp_makemake --nolink -f --deep -O out -KINET4_5_PROJ=../inet4.5 -DINET_IMPORT -I. -I/opt/OpenSplice/HDE/x86_64.linux/include -I/opt/OpenSplice/HDE/x86_64.linux/include/sys -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lINET$$\(D\) -d src -X.
 #
 
 # Output directory
@@ -11,7 +11,7 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Other makefile variables (-K)
-INET_PROJ=/Users/josefkamysek/Documents/Coding/Gradys/opp_env_install/inet-4.5.0
+INET4_5_PROJ=../inet4.5
 
 #------------------------------------------------------------------------------
 

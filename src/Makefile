@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for $(LIB_PREFIX)MAVSIMNET
 #
 # This file was generated with the command:
-#  opp_makemake --make-so -f --deep -O out -KINET_PROJ=/Users/josefkamysek/Documents/Coding/Gradys/opp_env_install/inet-4.5.0 -DINET_IMPORT -I. -I. -I$$\(INET_PROJ\)/src -L$$\(INET_PROJ\)/src -lINET$$\(D\) -Xmavlink
+#  opp_makemake --make-so -f --deep -O out -KINET4_5_PROJ=../../inet4.5 -DINET_IMPORT -I. -I. -I/opt/OpenSplice/HDE/x86_64.linux/include -I/opt/OpenSplice/HDE/x86_64.linux/include/sys -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -lINET$$\(D\) -Xmavlink
 #
 
 # Name of target to be created (-o option)
@@ -14,13 +14,13 @@ TARGET_IMPDEF = $(TARGET_NAME)$(IMPDEF_SUFFIX)
 TARGET_FILES = $(TARGET_DIR)/$(TARGET)
 
 # C++ include paths (with -I)
-INCLUDE_PATH = -I. -I. -I$(INET_PROJ)/src
+INCLUDE_PATH = -I. -I. -I/opt/OpenSplice/HDE/x86_64.linux/include -I/opt/OpenSplice/HDE/x86_64.linux/include/sys -I$(INET4_5_PROJ)/src
 
 # Additional object and library files to link with
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)$(INET_PROJ)/src  -lINET$(D)
+LIBS = $(LDFLAG_LIBPATH)$(INET4_5_PROJ)/src  -lINET$(D)
 
 # Output directory
 PROJECT_OUTPUT_DIR = ../out
@@ -45,7 +45,7 @@ MSGFILES =
 SMFILES =
 
 # Other makefile variables (-K)
-INET_PROJ=/Users/josefkamysek/Documents/Coding/Gradys/opp_env_install/inet-4.5.0
+INET4_5_PROJ=../../inet4.5
 
 #------------------------------------------------------------------------------
 
@@ -66,7 +66,7 @@ include $(CONFIGFILE)
 # Simulation kernel and user interface libraries
 OMNETPP_LIBS = -loppenvir$D $(KERNEL_LIBS) $(SYS_LIBS)
 ifneq ($(PLATFORM),win32)
-LIBS += -Wl,-rpath,$(abspath $(INET_PROJ)/src)
+LIBS += -Wl,-rpath,$(abspath $(INET4_5_PROJ)/src)
 endif
 
 COPTS = $(CFLAGS) $(IMPORT_DEFINES) -DINET_IMPORT $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
