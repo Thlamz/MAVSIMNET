@@ -13,6 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
+#include <fstream>
 #include "MAVLinkFileMobility.h"
 #include "mavsimnet/utils/TelemetryConditions.h"
 #include "mavsimnet/utils/VehicleRoutines.h"

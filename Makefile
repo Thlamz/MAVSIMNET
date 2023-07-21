@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for MAVSIMNET
 #
 # This file was generated with the command:
-#  opp_makemake --nolink -f --deep -O out -KINET_PROJ=../inet -DINET_IMPORT -I. -I$$\(INET_PROJ\)/src -L$$\(INET_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lINET$$\(D\) -d src -X.
+#  opp_makemake --nolink -f --deep -O out -KINET4_5_PROJ=../inet4.5 -DINET_IMPORT -I. -I/opt/OpenSplice/HDE/x86_64.linux/include -I/opt/OpenSplice/HDE/x86_64.linux/include/sys -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lINET$$\(D\) -d src -X.
 #
 
 # Output directory
@@ -11,7 +11,7 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Other makefile variables (-K)
-INET_PROJ=../inet
+INET4_5_PROJ=../inet4.5
 
 #------------------------------------------------------------------------------
 
@@ -20,11 +20,7 @@ INET_PROJ=../inet
 ifneq ("$(OMNETPP_CONFIGFILE)","")
 CONFIGFILE = $(OMNETPP_CONFIGFILE)
 else
-ifneq ("$(OMNETPP_ROOT)","")
-CONFIGFILE = $(OMNETPP_ROOT)/Makefile.inc
-else
 CONFIGFILE = $(shell opp_configfilepath)
-endif
 endif
 
 ifeq ("$(wildcard $(CONFIGFILE))","")
@@ -34,17 +30,18 @@ endif
 include $(CONFIGFILE)
 
 # we want to recompile everything if COPTS changes,
-# so we store COPTS into $COPTS_FILE and have object
-# files depend on it (except when "make depend" was called)
+# so we store COPTS into $COPTS_FILE (if COPTS has changed since last build)
+# and make the object files depend on it
 COPTS_FILE = $O/.last-copts
 ifneq ("$(COPTS)","$(shell cat $(COPTS_FILE) 2>/dev/null || echo '')")
-$(shell $(MKPATH) "$O" && echo "$(COPTS)" >$(COPTS_FILE))
+  $(shell $(MKPATH) "$O")
+  $(file >$(COPTS_FILE),$(COPTS))
 endif
 
 #------------------------------------------------------------------------------
 # User-supplied makefile fragment(s)
-# >>>
-# <<<
+-include makefrag
+
 #------------------------------------------------------------------------------
 
 # Main target
@@ -52,8 +49,10 @@ endif
 $(TARGET_DIR)/% :: $O/%
 	@mkdir -p $(TARGET_DIR)
 	$(Q)$(LN) $< $@
-ifeq ($(TOOLCHAIN_NAME),clangc2)
-	$(Q)-$(LN) $(<:%.dll=%.lib) $(@:%.dll=%.lib)
+ifeq ($(TOOLCHAIN_NAME),clang-msabi)
+	-$(Q)-$(LN) $(<:%.dll=%.lib) $(@:%.dll=%.lib) 2>/dev/null
+
+$O/$(TARGET_NAME).pdb: $O/$(TARGET)
 endif
 
 all:  submakedirs Makefile $(CONFIGFILE)
@@ -80,9 +79,14 @@ clean:
 	-$(Q)cd src && $(MAKE) clean
 
 cleanall:
-	$(Q)$(MAKE) -s clean MODE=release
-	$(Q)$(MAKE) -s clean MODE=debug
+	$(Q)$(CLEANALL_COMMAND)
 	$(Q)-rm -rf $(PROJECT_OUTPUT_DIR)
+
+help:
+	@echo "$$HELP_SYNOPSYS"
+	@echo "$$HELP_TARGETS"
+	@echo "$$HELP_VARIABLES"
+	@echo "$$HELP_EXAMPLES"
 
 # include all dependencies
 -include $(OBJS:%=%.d) $(MSGFILES:%.msg=$O/%_m.h.d)

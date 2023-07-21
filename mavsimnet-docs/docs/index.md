@@ -1,6 +1,6 @@
 # Getting Started
 
-![MAVSIMNET architecture diagram](../assets/architexture-diagram-v3-english.drawio.png)
+![MAVSIMNET architecture diagram](https://github.com/Thlamz/MAVSIMNET/blob/main/mavsimnet-docs/assets/architexture-diagram-v3-english.drawio.png)
 
 ## About
 
@@ -12,7 +12,7 @@ It works by spawning SITL instances that provide a physical simulation of the ve
 
 1. Clone the github repository.
 > git clone https://github.com/Thlamz/MAVSIMNET/
-2. Make sure you have INET installed in your workspace. If you see a directory named *inet* in your workspace you can skip this step. Note that the directory should be named *inet* and not something else.
+2. Make sure you have INET installed in your workspace. If you see a directory named *inet4.5* in your workspace you can skip this step. Note that the directory should be named *inet4.5* and not something else. If the name of your inet package is different due to multiple versions make sure that you select the correct inet package in project references (Settings -> Project References -> Select correct INET version). The project required INET version 4.5.
 3. Add the project to your OMNeT++ workspace. You can do this by following the steps in File > Import... > General > Existing Projects into Workspace. The root folder should be the folder you cloned in the first step.
 4. Download the compiled SITL simulator for each vehicle type you want to use. Save the paths to these files as you will need them later. Binaries can be found on ardupilot's [firmware website](https://firmware.ardupilot.org/). These are the binaries for the most common platforms and supported vehicles:
 

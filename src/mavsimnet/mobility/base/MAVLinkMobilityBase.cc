@@ -51,7 +51,7 @@ void MAVLinkMobilityBase::initialize(int stage)
         targetSystem = (par("targetSystem").intValue() == -1) ? lastId++ : par("targetSystem");
         targetComponent = par("targetComponent");
         vehicleType = static_cast<VehicleType>(par("vehicleType").intValue());
-        coordinateSystem = getModuleFromPar<IGeographicCoordinateSystem>(par("coordinateSystemModule"), this, true);
+        coordinateSystem = getModuleFromPar<IGeographicCoordinateSystem>(par("coordinateSystemModule"), this);
 
         rtScheduler = dynamic_cast<inet::RealTimeScheduler *>(getSimulation()->getScheduler());
 
@@ -548,6 +548,8 @@ void MAVLinkMobilityBase::receiveTelemetry(mavlink_message_t const& message) {
 void MAVLinkMobilityBase::finish() {
     MovingMobilityBase::finish();
     cancelAndDelete(timeoutMessage);
+    cancelAndDelete(heartbeatMessage);
+    cancelAndDelete(updateMessage);
 
     if(rtScheduler != nullptr) {
         rtScheduler->removeCallback(socketFd, this);
