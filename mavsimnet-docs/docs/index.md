@@ -1,6 +1,6 @@
 # Getting Started
 
-![MAVSIMNET architecture diagram](https://github.com/Thlamz/MAVSIMNET/blob/main/mavsimnet-docs/assets/architexture-diagram-v3-english.drawio.png)
+![MAVSIMNET architecture diagram](https://raw.githubusercontent.com/Thlamz/MAVSIMNET/main/mavsimnet-docs/assets/architexture-diagram-v3-english.drawio.png)
 
 ## About
 
