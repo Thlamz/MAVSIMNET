@@ -4,3 +4,5 @@ MAVSIMNET is a simulation framework for the OMNeT++ discrete event simulator bas
 
 # Documentation
 More information can be found on the [project's official documentation](https://thlamz.github.io/MAVSIMNET/)
+
+# This project has been integrated with [GrADyS-SIM](https://github.com/Project-GrADyS/gradys-simulations) and no longer needs to be used independently.
