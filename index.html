@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="A simulation framework for mobile vehicle networks" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>MAVSIMNET</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Getting Started";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> MAVSIMNET
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href=".">Getting Started</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#about">About</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#development">Development</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="Modules/MAVLinkFileMobility/">MAVLinkFileMobility</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="Modules/MAVLinkMobilityBase/">MAVLinkMobilityBase</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="Modules/MAVLinkRandomWaypointMobility/">MAVLinkRandomWaypointMobility</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Utils</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="Utils/TelemetryConditions/">TelemetryConditions</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="Utils/VehicleRoutines/">VehicleRoutines</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">MAVSIMNET</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Getting Started</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/Thlamz/MAVSIMNET/edit/master/docs/index.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="getting-started">Getting Started</h1>
+<p><img alt="MAVSIMNET architecture diagram" src="https://raw.githubusercontent.com/Thlamz/MAVSIMNET/main/mavsimnet-docs/assets/architexture-diagram-v3-english.drawio.png" /></p>
+<h2 id="about">About</h2>
+<p>MAVSIMNET is a simulation framework for the OMNeT++ discrete event simulator based on Ardupilot's Software In The Loop (SITL) simulator. It allows you to enrich OMNeT++ and INET's simulations with realistic mobility models for the mobile nodes in your network. </p>
+<p>It works by spawning SITL instances that provide a physical simulation of the vehicle's behaviour and connecting them to the mobility classes in your simulation. A user can transparently use these mobility modules without worrying about the details of the communication and messages being exchanged between the network simulator and the SITL instances and a developer can use the strong interface provided in the project's base mobility class to implement his own mobility modules.</p>
+<h2 id="installation">Installation</h2>
+<ol>
+<li>Clone the github repository.<blockquote>
+<p>git clone https://github.com/Thlamz/MAVSIMNET/</p>
+</blockquote>
+</li>
+<li>Make sure you have INET installed in your workspace. If you see a directory named <em>inet4.5</em> in your workspace you can skip this step. Note that the directory should be named <em>inet4.5</em> and not something else. If the name of your inet package is different due to multiple versions make sure that you select the correct inet package in project references (Settings -&gt; Project References -&gt; Select correct INET version). The project required INET version 4.5.</li>
+<li>Add the project to your OMNeT++ workspace. You can do this by following the steps in File &gt; Import... &gt; General &gt; Existing Projects into Workspace. The root folder should be the folder you cloned in the first step.</li>
+<li>Download the compiled SITL simulator for each vehicle type you want to use. Save the paths to these files as you will need them later. Binaries can be found on ardupilot's <a href="https://firmware.ardupilot.org/">firmware website</a>. These are the binaries for the most common platforms and supported vehicles:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Vehicle</th>
+<th>Windows</th>
+<th>Linux</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Copter</td>
+<td><a href="https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/CopterStable/">Link</a></td>
+<td><a href="https://firmware.ardupilot.org/Copter/stable/SITL_x86_64_linux_gnu/">Link</a></td>
+</tr>
+<tr>
+<td>Plane</td>
+<td><a href="https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/PlaneStable/">Link</a></td>
+<td><a href="https://firmware.ardupilot.org/Plane/stable/SITL_x86_64_linux_gnu/">Link</a></td>
+</tr>
+<tr>
+<td>Rover</td>
+<td><a href="https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/RoverStable/">Link</a></td>
+<td><a href="https://firmware.ardupilot.org/Rover/stable/SITL_x86_64_linux_gnu/">Link</a></td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>Write or download parameter files for the vehicle types you want to use. Save the paths to these files as you will need them later. We recommend donwloading the default parameter files from here:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Vehicle</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Copter</td>
+<td><a href="https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/copter.parm">Link</a></td>
+</tr>
+<tr>
+<td>Plane</td>
+<td><a href="https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/plane.parm">Link</a></td>
+</tr>
+<tr>
+<td>Rover</td>
+<td><a href="https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/rover.parm">Link</a></td>
+</tr>
+</tbody>
+</table>
+<p>To verify you have completed the installation successfuly run the randomwaypoint showcase present in the showcases folder. </p>
+<blockquote>
+<p><strong>WARNING:</strong> You will need to modify the .ini file for this simulation and any other that you run to include your SITL installation paths and parameter file paths for each type of vehicle that you want to use. You should have downloaded these files on steps 4 and 5. Further instructions can be found in the <em>Usage</em> section.</p>
+</blockquote>
+<h2 id="usage">Usage</h2>
+<p>The mobility modules available in this framework are instances of INET mobility modules. If you do not know what those are or how to use them you can check <a href="https://inet.omnetpp.org/docs/users-guide/index.html">INET's documentation</a>. There you will learn how to set up a simulation environment, populate it with nodes and <a href="https://inet.omnetpp.org/docs/users-guide/index.html">set them up with mobility modules</a>. After your simulation is set up there is only a couple things you need to worry about.</p>
+<p>A very important thing to take note of is that your simulation has to use INET's Real Time Scheduler. This guarantees that the SITL instances and OMNET++ are syncronized. You can set this up in your .ini file with this line:</p>
+<blockquote>
+<p>scheduler-class = "inet::RealTimeScheduler"</p>
+<p><strong>WARNING:</strong> If you are on windows and using INET version 4.2.5 or lower INET will not compile if you use inet::RealTimeScheduler with the Clang compiler. You will need to compile OMNeT++ with gcc. To do this change the value of the <code>PREFER_CLANG</code> parameter to "no". In the <em>configure.user</em> change the line to <code>PREFER_CLANG=no</code>. After doing this run these commands in mingw:</p>
+</blockquote>
+<pre><code>make clean
+./configure
+make
+</code></pre>
+<p>Using the available mobility modules is as simple as setting your node's mobility module. You can do this with the following command, using the RandomWaypointMobility module as an example:</p>
+<blockquote>
+<p>*.client[*].mobility.typename = "MAVLinkRandomWaypointMobility"</p>
+</blockquote>
+<p>After placing this module in your simulation you need to set up the paths to the SITL simulators for each vehicle type supported. Currently you have to set up the <em>copterSimulatorPath</em>, <em>planeSimulatorPath</em> and <em>roverSimulatorPath</em> parameters. These are the paths to the files you have downloaded in step 4 of the installation, more specifically the path to the simulator binaries (<em>.elf</em> file on windows and extensionless file on linux). For example, if you ara on windows and have placed the copter simulator in the CopterSimulator file of the root directory of your C: drive, the parameter should be set to:</p>
+<blockquote>
+<p>*.client.copterSimulatorPath = "C:\\CopterSimulator\\ArduCopter.elf"</p>
+</blockquote>
+<p>Notice the escapes characters as windows uses back-slashes in paths. </p>
+<p><strong>INFO:</strong> If you are not using a vehicle type you can leave the path for that vehicle's simulator as an empty string. </p>
+<p>After setting this up you need to pay attention to the module's required parameters. Those can be found in the module's documentation page. Remember to pay attention if the module extends another one, as the required fields for the latter will also need to be filled. </p>
+<p>In general the parameters you need to fill when using any of the MAVSIMNET mobility models are:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vehicleType</td>
+<td><em>int</em></td>
+<td>MAVLink type of vehicle that this class represents <br>(COPTER=1, PLANE=2, ROVER=4)</td>
+</tr>
+<tr>
+<td>paramPath</td>
+<td><em>string</em></td>
+<td>Path for the parameters for this vehicle. These are the parameters<br> you downloaded in step 5 of the installation. <br><strong>Do not use parameters for a different vehicle type</strong></td>
+</tr>
+</tbody>
+</table>
+<p>That is all you need to know if you plan to use this framework's existing modules with no modifications. If you plan on expanding upon it of modifying the modules there are a few more things you should be aware of.</p>
+<h2 id="development">Development</h2>
+<p>There are two important modules in the repository's utils folder that are useful for developers. </p>
+<p>The VehicleRoutines module offers several utility functions that simplify common tasks using the MAVLink protocol. These functions generate a vector of instructions that should be queued using MAVLinkMobilityBase's queueInstructions function. </p>
+<p>The other important module is the TelemetryConditions module. As explained in the <a href="/MAVSIMNET/Modules/MAVLinkMobilityBase/">MAVLinkMobilityBase</a> documentation messages are dispatched to the SITL instance using a message queue. This message queue moves only when the front-most message is concluded. What defines a message as concluded is a function, called a Condition, that gets called on every telemetry received. This allows a developer to define the condition that needs to be fulfilled before the next message in the queue is sent. A takeoff message could wait for the vehicle to reach a certain altutde, for example. The TelemetryRoutines module has some ready-to-use conditions for these situations.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="Modules/MAVLinkFileMobility/" class="btn btn-neutral float-right" title="MAVLinkFileMobility">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/Thlamz/MAVSIMNET/" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+      <span><a href="Modules/MAVLinkFileMobility/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.5.3
+Build Date UTC : 2024-01-14 15:53:03.055597+00:00
+-->
